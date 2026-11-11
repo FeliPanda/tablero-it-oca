@@ -1,4 +1,5 @@
 publicar.env
 data.json
+historial_cache.json
 __pycache__/
 *.log

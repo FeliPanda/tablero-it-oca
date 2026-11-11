@@ -23,7 +23,25 @@ try:
     from cryptography.hazmat.primitives import hashes
 except ImportError:
     sys.exit('Faltan librerías: pip install requests cryptography')
-from collector import collect
+
+def self_update():
+    """Trae la última versión de collector.py del repositorio (si cambió) antes de usarla.
+    Se desactiva con AUTO_ACTUALIZAR=0 en publicar.env."""
+    if os.environ.get('AUTO_ACTUALIZAR', '1') == '0' or not os.environ.get('GITHUB_REPO'):
+        return
+    try:
+        url = f"https://raw.githubusercontent.com/{os.environ['GITHUB_REPO']}/main/collector.py"
+        r = requests.get(url, timeout=30)
+        if r.status_code != 200 or 'def collect(' not in r.text:
+            return
+        path = os.path.join(HERE, 'collector.py')
+        cur = open(path, encoding='utf-8').read() if os.path.exists(path) else ''
+        if r.text != cur:
+            compile(r.text, 'collector.py', 'exec')
+            open(path, 'w', encoding='utf-8', newline='\n').write(r.text)
+            print('collector.py actualizado desde GitHub')
+    except Exception as ex:
+        print('No se pudo actualizar collector.py:', ex)
 
 ITER = 310000
 
@@ -64,6 +82,8 @@ def upload(repo, token, path, content_bytes, message):
 
 def main():
     load_env()
+    self_update()
+    from collector import collect
     password = need('TABLERO_PASSWORD')
     if len(password) < 12:
         sys.exit('La contraseña del tablero debe tener al menos 12 caracteres.')

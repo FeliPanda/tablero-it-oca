@@ -262,6 +262,8 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
       <div class="card"><h3>Backlog por grupo</h3><div class="table-wrap" id="blGroups"></div></div>
       <div class="card"><h3>Backlog por estado</h3><div class="chart-box"><canvas id="chBlStatus"></canvas></div></div>
     </div>
+    <div class="card" style="margin-top:14px"><h3>Tickets sin movimiento</h3><p class="sub">Abiertos sin ninguna actualización (seguimiento, tarea, cambio de estado o de grupo) desde hace varios días hábiles.</p><div class="grid kpis" id="staleKpis"></div><div id="staleTable" style="margin-top:12px"></div></div>
+    <div class="card" style="margin-top:14px"><h3>Tiempo en espera</h3><p class="sub">Tiempo que los tickets pasan en estado En espera (sale del historial de cada ticket).</p><div class="grid kpis" id="waitKpis"></div><div id="waitTable" style="margin-top:12px"></div></div>
     <div class="card" style="margin-top:14px"><h3>Carga por técnico (abiertos)</h3><div class="chart-box tall"><canvas id="chTech"></canvas></div></div>
   </section>
 
@@ -269,6 +271,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
     <div class="grid kpis" id="fcrKpis"></div>
     <div class="card" style="margin-top:14px"><h3>Actividad por área</h3><div class="chart-box"><canvas id="chAreas"></canvas></div></div>
     <div class="card" style="margin-top:14px"><h3>Indicadores por grupo</h3><div class="table-wrap" id="groupsTable"></div></div>
+    <div class="card" style="margin-top:14px"><h3>Reasignaciones entre grupos</h3><p class="sub">Cuántas veces un ticket cambia de grupo asignado. Muchas derivaciones suelen indicar una categoría o una regla de asignación a revisar.</p><div class="grid kpis" id="reasKpis"></div><div id="reasTable" style="margin-top:12px"></div></div>
     <div class="card" style="margin-top:14px"><h3>Productividad por técnico</h3><div id="techTable"></div></div>
   </section>
 
@@ -318,6 +321,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
 
   <section class="tabpane hidden" id="tab-calidad">
     <div class="grid kpis" id="calKpis"></div>
+    <div class="card" style="margin-top:14px"><h3>Reaperturas</h3><p class="sub">Tickets resueltos en el período que el solicitante o un técnico volvieron a abrir.</p><div class="grid kpis" id="reopKpis"></div><div id="reopTable" style="margin-top:12px"></div></div>
     <div class="grid cols-2" style="margin-top:14px">
       <div class="card"><h3>Distribución de la encuesta de satisfacción</h3><div class="chart-box"><canvas id="chSat"></canvas></div></div>
       <div class="card"><h3>Encuestas negativas (1–2)</h3><div id="calNeg"></div></div>
@@ -331,7 +335,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
 
   <section class="tabpane hidden" id="tab-detalle">
     <div class="toolbar">
-      <select id="dScope" class="search" style="min-width:200px"><option value="ing">Ingresados en el período</option><option value="res">Resueltos en el período</option><option value="bl">Backlog al cierre</option><option value="venc">Backlog vencido (SLA)</option><option value="viejos">Backlog con más de 12 días hábiles</option><option value="slalate">Resueltos fuera de SLA</option><option value="slaok">Resueltos dentro de SLA</option><option value="ttolate">Atención fuera de término</option><option value="porvencer4">Por vencer en 4 h</option><option value="porvencer">Por vencer en 8 h</option><option value="abiertos">Abiertos a la fecha</option><option value="resall">Resueltos en el período (todos)</option><option value="all">Todos los cargados</option></select>
+      <select id="dScope" class="search" style="min-width:200px"><option value="ing">Ingresados en el período</option><option value="res">Resueltos en el período</option><option value="bl">Backlog al cierre</option><option value="venc">Backlog vencido (SLA)</option><option value="viejos">Backlog con más de 12 días hábiles</option><option value="slalate">Resueltos fuera de SLA</option><option value="slaok">Resueltos dentro de SLA</option><option value="ttolate">Atención fuera de término</option><option value="porvencer4">Por vencer en 4 h</option><option value="porvencer">Por vencer en 8 h</option><option value="abiertos">Abiertos a la fecha</option><option value="stale">Sin movimiento</option><option value="enespera">En espera</option><option value="pingpong">Con 2 o más reasignaciones</option><option value="reab">Reabiertos</option><option value="resall">Resueltos en el período (todos)</option><option value="all">Todos los cargados</option></select>
       <select id="dType" class="search" style="min-width:150px"><option value="">Todos los tipos</option><option value="1">Incidentes</option><option value="2">Requerimientos</option></select>
       <select id="dPrio" class="search" style="min-width:130px"><option value="">Todas las P</option><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="5">P5</option></select>
       <input class="search" id="dSearch" placeholder="Buscar por ID, título, grupo, categoría…">
@@ -359,6 +363,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
   <div class="row">
     <label>Meses de historia a descargar<input id="cMonths" type="number" min="1" max="60"></label>
     <label>Antigüedad máxima (días hábiles)<input id="cAge" type="number" min="1"></label>
+    <label>Sin movimiento desde (días hábiles)<input id="cStale" type="number" min="1"></label>
   </div>
   <div class="row">
     <label>Objetivo SLA P1 (%)<input id="cP1" type="number" min="0" max="100" step="0.5"></label>
@@ -382,6 +387,7 @@ const DEFAULT_CFG = {
   monthsBack: 12,
   slaTargets: {1:97, 2:96, 3:96, 4:96, 5:96},
   maxAgeBusinessDays: 12,
+  staleBusinessDays: 5,
   // Áreas (gerencias) por prefijo de grupo. La primera que coincide gana.
   areas: [
     {name:'Mesa de Ayuda', match:['MDA','BACKOFFICE']},
@@ -399,7 +405,7 @@ function saveCfg(c){ try{ localStorage.setItem(LS_KEY, JSON.stringify(c)); }catc
 let CFG = loadCfg();
 
 /* ---------- Opciones de búsqueda de GLPI (IDs estándar) ---------- */
-const T_FIELDS = {id:2,title:1,type:14,status:12,priority:3,urgency:10,date:15,solvedate:17,closedate:16,ttr:18,tto:155,lateTTR:82,lateTTO:159,category:7,group:8,tech:5,location:83,source:9,satisfaction:62,problems:200,slaTTR:30,takeDelay:150,solveDelay:154};
+const T_FIELDS = {lastupdate:19,id:2,title:1,type:14,status:12,priority:3,urgency:10,date:15,solvedate:17,closedate:16,ttr:18,tto:155,lateTTR:82,lateTTO:159,category:7,group:8,tech:5,location:83,source:9,satisfaction:62,problems:200,slaTTR:30,takeDelay:150,solveDelay:154};
 const P_FIELDS = {id:2,title:1,status:12,priority:3,date:15,solvedate:17,closedate:16,category:7,group:8,tech:5,tickets:141,equipo:76685,etapa:76686,causa:76687};
 const C_FIELDS = {id:2,title:1,status:12,priority:3,date:15,solvedate:17,closedate:16,category:7,group:8,tech:5};
 
@@ -494,7 +500,9 @@ function normTicket(r){
     satisfaction: num(get(r,T_FIELDS.satisfaction)),
     problems: num(get(r,T_FIELDS.problems)) || 0,
     takeDelay: num(get(r,T_FIELDS.takeDelay)),
-    solveDelay: num(get(r,T_FIELDS.solveDelay))
+    solveDelay: num(get(r,T_FIELDS.solveDelay)),
+    lastupdate: parseDate(first(get(r,T_FIELDS.lastupdate))),
+    ev: (r.ev && typeof r.ev==='object') ? r.ev : null
   };
   if(!t.solvedate && (t.status===5||t.status===6)) t.solvedate = t.closedate;
   t.area = areaOf(t.group);
@@ -588,6 +596,12 @@ const NOW = () => STATE.generated || new Date();
 const dueSoon = (t,h) => { const n=NOW(); return t.open && t.status!==4 && !t.lateTTR && t.ttr && t.ttr>=n && (t.ttr-n)<=h*36e5; };
 const catKey = t => t.category.split(' > ').slice(0,3).join(' > ');
 function fmtLeft(ms){ const m=Math.round(ms/6e4); if(m<60) return m+' min'; const h=Math.floor(m/60); return h+' h '+String(m%60).padStart(2,'0')+' min'; }
+const hasEv = () => STATE.tickets.some(t=>t.ev);
+const hasMod = () => STATE.tickets.some(t=>t.lastupdate);
+const waitHours = t => !t.ev ? null : (t.ev.w||0) + (t.ev.ws && t.status===4 ? Math.max(0,(NOW()-parseDate(t.ev.ws))/36e5) : 0);
+const staleDays = t => t.lastupdate ? businessDaysBetween(t.lastupdate, NOW()) : null;
+const isStale = t => t.open && t.lastupdate && staleDays(t) >= (CFG.staleBusinessDays||5);
+const NO_EV = '<div class="empty">Disponible cuando el publicador descargue el historial de los tickets (versión actualizada de publicar.py).</div>';
 const isOld = (t,cut) => businessDaysBetween(t.date,cut)>CFG.maxAgeBusinessDays && !(t.problems>0);
 function openAt(t, when){ return t.date && t.date<when && !(t.solvedate && t.solvedate<=when) && !(t.status===6 && !t.solvedate && t.closedate && t.closedate<=when); }
 
@@ -796,6 +810,22 @@ function renderBacklog(list, r){
   ].join('');
   const labels=weeks.map(w=>w.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})); const fut=[]; for(let i=1;i<=8;i++){ const f=new Date(w0.getFullYear(),w0.getMonth(),w0.getDate()+7*i); fut.push(f.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})); }
   chart('chBlProj',{type:'line',data:{labels:[...labels,'Hoy',...fut],datasets:[{label:'Backlog al inicio de cada semana',data:[...blAt,blNow,...fut.map(()=>null)],borderColor:PURPLE,backgroundColor:'rgba(91,43,130,.12)',fill:true,tension:.25},{label:'Proyección',data:[...blAt.map(()=>null),blNow,...proj],borderColor:ORANGE,borderDash:[6,4],pointRadius:2,tension:.2}]},options:{scales:{y:{beginAtZero:true}}}});
+  // Sin movimiento
+  if(hasMod()){
+    const st=list.filter(isStale).sort((a,b)=>a.lastupdate-b.lastupdate); const lim=CFG.staleBusinessDays||5;
+    const s10=st.filter(t=>staleDays(t)>=10).length, sNo=st.filter(t=>!t.tech).length;
+    $('#staleKpis').innerHTML=[kpi(`Sin movimiento ≥ ${lim} días hábiles`,fmt(st.length),fmtPct(pct(st.length,list.filter(t=>t.open).length))+' del backlog',st.length?'warn':'good',st.length?{scope:'stale'}:null),kpi('≥ 10 días hábiles',fmt(s10),'Sin ninguna actualización',s10?'bad':'good'),kpi('Sin técnico asignado',fmt(sNo),'Dentro de los sin movimiento',sNo?'bad':'good')].join('');
+    const byG=topN(st,t=>t.group||'Sin grupo',8);
+    $('#staleTable').innerHTML=st.length?`<div class="rep-cols"><div>${simpleTable([{t:'Grupo'},{t:'Sin movimiento',n:1}],byG.map(([k,n])=>[esc(k),fmt(n)]))}</div><div class="table-wrap">${simpleTable([{t:'ID'},{t:'Título'},{t:'Grupo'},{t:'Última actualización'},{t:'Días hábiles',n:1}],st.slice(0,40).map(t=>[glpiLink('ticket',t.id),esc(t.title),esc(t.group),t.lastupdate.toLocaleDateString('es-AR'),`<span class="badge ${staleDays(t)>=10?'b-ko':'b-warn'}">${staleDays(t)}</span>`]))}</div></div>`:'<div class="empty">Todos los tickets abiertos tuvieron movimiento recientemente.</div>';
+  } else { $('#staleKpis').innerHTML=''; $('#staleTable').innerHTML='<div class="empty">Disponible con la fecha de última actualización, que descarga la versión actualizada del publicador.</div>'; }
+  // Tiempo en espera
+  if(hasEv()){
+    const we=list.filter(t=>t.open&&t.status===4).map(t=>({t,h:waitHours(t)})).sort((a,b)=>b.h-a.h);
+    const res=list.filter(t=>inRange(t.solvedate,r)&&t.ev); const tot=res.reduce((a,t)=>a+(t.solvedate-t.date)/36e5,0), wt=res.reduce((a,t)=>a+(t.ev.w||0),0);
+    const passed=res.filter(t=>(t.ev.w||0)>0).length;
+    $('#waitKpis').innerHTML=[kpi('En espera ahora',fmt(we.length),'Tickets abiertos en estado En espera','',we.length?{scope:'enespera'}:null),kpi('Espera promedio actual',fmtH(we.length?we.reduce((a,x)=>a+x.h,0)/we.length:null),'De los que están en espera'),kpi('Tiempo en espera',fmtPct(pct(wt,tot)),'Del tiempo total de los resueltos en el período'),kpi('Pasaron por espera',fmtPct(pct(passed,res.length)),`${fmt(passed)} de ${fmt(res.length)} resueltos`)].join('');
+    $('#waitTable').innerHTML=we.length?`<div class="table-wrap">${simpleTable([{t:'ID'},{t:'Título'},{t:'Grupo'},{t:'Técnico'},{t:'En espera',n:1}],we.slice(0,40).map(({t,h})=>[glpiLink('ticket',t.id),esc(t.title),esc(t.group),esc(t.tech),`<span class="badge ${h>=120?'b-ko':h>=48?'b-warn':'b-na'}">${fmtH(h)}</span>`]))}</div>`:'<div class="empty">No hay tickets en espera.</div>';
+  } else { $('#waitKpis').innerHTML=''; $('#waitTable').innerHTML=NO_EV; }
   const tech={};bl.forEach(t=>{const k=t.tech||'Sin técnico asignado';tech[k]=(tech[k]||0)+1});
   const tt=Object.entries(tech).sort((a,b)=>b[1]-a[1]).slice(0,15);
   chart('chTech',{type:'bar',data:{labels:tt.map(x=>x[0]),datasets:[{label:'Tickets abiertos por técnico',data:tt.map(x=>x[1]),backgroundColor:PURPLE2}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
@@ -814,6 +844,16 @@ function renderAreas(list, r){
   list.forEach(t=>{ (t.techs.length?t.techs:[]).forEach(k=>{ const o=add(k); if(inRange(t.solvedate,r)) o.res.push(t); if(t.open){ o.open++; if(isOverdue(t,r.cut)) o.venc++; } }); });
   const trows=Object.entries(T).filter(([,o])=>o.res.length||o.open).sort((a,b)=>b[1].res.length-a[1].res.length);
   $('#techTable').innerHTML = trows.length ? `<div class="table-wrap"><table class="data"><thead><tr><th>Técnico</th><th class="num">Resueltos</th><th class="num">Por día hábil</th><th class="num">Mediana resolución</th><th class="num">% en SLA</th><th class="num">Abiertos</th><th class="num">Vencidos</th></tr></thead><tbody>${trows.map(([k,o])=>{ const h=o.res.map(t=>(t.solvedate-t.date)/36e5).sort((a,b)=>a-b); const ws=o.res.filter(hasSla); const sv=pct(ws.filter(t=>!isLate(t)).length,ws.length); return `<tr><td>${esc(k)}</td><td class="num">${o.res.length?`<a href="#" class="go-link" data-goto="resall" data-tech="${esc(k)}">${fmt(o.res.length)}</a>`:'0'}</td><td class="num">${(o.res.length/bd).toLocaleString('es-AR',{maximumFractionDigits:1})}</td><td class="num">${fmtH(h.length?h[Math.floor(h.length/2)]:null)}</td><td class="num">${sv===null?'–':`<span class="badge ${sv>=96?'b-ok':sv>=85?'b-warn':'b-ko'}">${fmtPct(sv)}</span>`}</td><td class="num">${o.open?`<a href="#" class="go-link" data-goto="abiertos" data-tech="${esc(k)}">${fmt(o.open)}</a>`:'0'}</td><td class="num">${o.venc?`<span class="badge b-ko">${fmt(o.venc)}</span>`:'0'}</td></tr>`; }).join('')}</tbody></table></div><p class="sub" style="margin-top:8px">${fmt(bd)} días hábiles en el período. Un ticket con varios técnicos cuenta para cada uno.</p>` : '<div class="empty">Sin datos de técnicos en el período.</div>';
+  // Reasignaciones
+  if(hasEv()){
+    const res=list.filter(t=>inRange(t.solvedate,r)&&t.ev); const re1=res.filter(t=>t.ev.r>=1), re3=list.filter(t=>inRange(t.date,r)&&t.ev&&t.ev.r>=2);
+    const avgG=res.length?res.reduce((a,t)=>a+Math.max(1,(t.ev.g||[]).length),0)/res.length:null;
+    $('#reasKpis').innerHTML=[kpi('Resueltos con reasignación',fmtPct(pct(re1.length,res.length)),`${fmt(re1.length)} de ${fmt(res.length)} pasaron por más de un grupo`,pct(re1.length,res.length)>30?'warn':''),kpi('Grupos por ticket',avgG===null?'–':avgG.toLocaleString('es-AR',{maximumFractionDigits:2}),'Promedio en los resueltos'),kpi('Tickets que rebotan',fmt(re3.length),'Ingresados con 2 o más reasignaciones',re3.length?'warn':'',re3.length?{scope:'pingpong'}:null)].join('');
+    const flows={}, outG={}, inG={};
+    list.filter(t=>inRange(t.date,r)&&t.ev&&(t.ev.g||[]).length>1).forEach(t=>{ const g=t.ev.g; for(let i=1;i<g.length;i++){ const k=g[i-1]+' → '+g[i]; flows[k]=(flows[k]||0)+1; outG[g[i-1]]=(outG[g[i-1]]||0)+1; inG[g[i]]=(inG[g[i]]||0)+1; } });
+    const fl=Object.entries(flows).sort((a,b)=>b[1]-a[1]).slice(0,12); const gg=[...new Set([...Object.keys(outG),...Object.keys(inG)])].map(g=>[g,outG[g]||0,inG[g]||0]).sort((a,b)=>(b[1]+b[2])-(a[1]+a[2])).slice(0,12);
+    $('#reasTable').innerHTML=fl.length?`<div class="rep-cols"><div><h3>Derivaciones más frecuentes</h3>${simpleTable([{t:'De → A'},{t:'Tickets',n:1}],fl.map(([k,n])=>[esc(k),fmt(n)]))}</div><div><h3>Por grupo</h3>${simpleTable([{t:'Grupo'},{t:'Derivó',n:1},{t:'Recibió',n:1}],gg.map(([g,o,i])=>[esc(g),fmt(o),fmt(i)]))}</div></div>`:'<div class="empty">No hubo reasignaciones entre grupos en el período.</div>';
+  } else { $('#reasKpis').innerHTML=''; $('#reasTable').innerHTML=NO_EV; }
   // Resolución en primer nivel (MDA-N1)
   const res=list.filter(t=>inRange(t.solvedate,r)); const n1=res.filter(t=>/^MDA-N1$/i.test(t.group)&&t.groups.length<=1);
   $('#fcrKpis').innerHTML=[kpi('Resueltos en primer nivel', fmtPct(pct(n1.length,res.length)), `${fmt(n1.length)} de ${fmt(res.length)} resueltos sin derivar fuera de MDA-N1`),kpi('Derivados a otros grupos',fmtPct(pct(res.length-n1.length,res.length)),'Resueltos por un grupo distinto a MDA-N1')].join('');
@@ -922,6 +962,12 @@ function renderCalidad(list, r){
   const dist=[1,2,3,4,5].map(s=>sat.filter(t=>Math.round(t.satisfaction)===s).length);
   $('#calKpis').innerHTML=[kpi('Satisfacción promedio',sat.length?(sat.reduce((a,t)=>a+t.satisfaction,0)/sat.length).toLocaleString('es-AR',{maximumFractionDigits:2})+' / 5':'–',`${fmt(sat.length)} respuestas`,'hero'),kpi('Respuestas positivas (4–5)',fmtPct(pct(dist[3]+dist[4],sat.length)),''),kpi('Respuestas negativas (1–2)',fmtPct(pct(dist[0]+dist[1],sat.length)),'Revisar con Gestión de Procesos',dist[0]+dist[1]?'warn':''),kpi('Tasa de respuesta',fmtPct(pct(sat.length,res.length)),`Sobre ${fmt(res.length)} resueltos`),kpi('Sin categoría',fmt(list.filter(t=>inRange(t.date,r)&&t.category==='Sin categoría').length),'Ingresados sin categorizar'),kpi('Sin grupo asignado',fmt(list.filter(t=>t.open&&!t.group).length),'Abiertos a hoy')].join('');
   chart('chSat',{type:'bar',data:{labels:['1','2','3','4','5'],datasets:[{label:'Respuestas por puntaje',data:dist,backgroundColor:[RED,RED,ORANGE,GREEN,GREEN]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  if(hasEv()){
+    const rs=res.filter(t=>t.ev); const ro=rs.filter(t=>t.ev.o>0); const rate=pct(ro.length,rs.length);
+    $('#reopKpis').innerHTML=[kpi('Tasa de reapertura',fmtPct(rate),`${fmt(ro.length)} de ${fmt(rs.length)} resueltos se reabrieron al menos una vez`,rate===null?'':rate<=5?'good':rate<=10?'warn':'bad',ro.length?{scope:'reab'}:null),kpi('Reaperturas totales',fmt(ro.reduce((a,t)=>a+t.ev.o,0)),'Del período')].join('');
+    const bg=topN(ro,t=>t.group||'Sin grupo',8).map(([g,n])=>{ const tot=rs.filter(t=>(t.group||'Sin grupo')===g).length; return [esc(g),fmt(n),fmtPct(pct(n,tot))]; });
+    $('#reopTable').innerHTML=ro.length?simpleTable([{t:'Grupo que resolvió'},{t:'Reabiertos',n:1},{t:'% de sus resueltos',n:1}],bg):'<div class="empty">No hubo reaperturas en el período.</div>';
+  } else { $('#reopKpis').innerHTML=''; $('#reopTable').innerHTML=NO_EV; }
   const neg=sat.filter(t=>t.satisfaction<=2).sort((a,b)=>b.solvedate-a.solvedate);
   $('#calNeg').innerHTML=neg.length?ticketTable(neg,true):'<div class="empty">Sin encuestas negativas en el período.</div>';
 }
@@ -930,7 +976,7 @@ let detailQuery='';
 function renderDetalle(list, r){
   const scope=$('#dScope').value, cut=r.cut; let arr;
   const F={ing:t=>inRange(t.date,r), res:t=>inRange(t.solvedate,r), bl:t=>openAt(t,cut), venc:t=>openAt(t,cut)&&isOverdue(t,cut), viejos:t=>openAt(t,cut)&&isOld(t,cut),
-    slalate:t=>inRange(t.solvedate,r)&&hasSla(t)&&isLate(t), slaok:t=>inRange(t.solvedate,r)&&hasSla(t)&&!isLate(t), ttolate:t=>inRange(t.date,r)&&t.tto&&t.lateTTO, porvencer:t=>dueSoon(t,8), porvencer4:t=>dueSoon(t,4), abiertos:t=>t.open, resall:t=>inRange(t.solvedate,r)};
+    slalate:t=>inRange(t.solvedate,r)&&hasSla(t)&&isLate(t), slaok:t=>inRange(t.solvedate,r)&&hasSla(t)&&!isLate(t), ttolate:t=>inRange(t.date,r)&&t.tto&&t.lateTTO, porvencer:t=>dueSoon(t,8), stale:t=>isStale(t), enespera:t=>t.open&&t.status===4, pingpong:t=>inRange(t.date,r)&&t.ev&&t.ev.r>=2, reab:t=>inRange(t.solvedate,r)&&t.ev&&t.ev.o>0, porvencer4:t=>dueSoon(t,4), abiertos:t=>t.open, resall:t=>inRange(t.solvedate,r)};
   arr = F[scope] ? list.filter(F[scope]) : list.slice();
   const dp=$('#dPrio').value, dt=$('#dType').value; if(dp) arr=arr.filter(t=>String(t.p)===dp); if(dt) arr=arr.filter(t=>String(t.type)===dt);
   if(detailExtra){ if(detailExtra.cat) arr=arr.filter(t=>catKey(t)===detailExtra.cat); if(detailExtra.loc) arr=arr.filter(t=>(t.location||'Sin dato')===detailExtra.loc); if(detailExtra.tech) arr=arr.filter(t=>t.techs.includes(detailExtra.tech)); }
@@ -994,6 +1040,8 @@ function renderInforme(list, r){
   ex.push(`El backlog pasó de <b>${fmt(blStart)}</b> tickets al inicio del período a <b>${fmt(m.backlog.length)}</b> al cierre; <b>${fmt(m.vencido.length)}</b> tienen el SLA vencido (${fmtPct(pct(m.vencido.length,m.backlog.length))}) y <b>${fmt(m.viejos.length)}</b> superan los ${CFG.maxAgeBusinessDays} días hábiles sin problema asociado.`);
   ex.push(`El cumplimiento de SLA de resolución fue <b>${fmtPct(m.slaPct)}</b>${m.slaN?` (${fmt(m.slaOk)} de ${fmt(m.slaN)})`:''}${mp.slaPct!==null?`, contra ${fmtPct(mp.slaPct)} del período anterior`:''}. ${badP.length?`No alcanzan el objetivo: ${badP.map(p=>`P${p} (${fmtPct(sla[p].pct)})`).join(', ')}.`:'Todas las prioridades alcanzan el objetivo.'}`);
   ex.push(`Hubo <b>${fmt(p1.length)}</b> incidentes P1 con un tiempo medio de resolución de <b>${fmtH(p1avg)}</b> (objetivo 8 h).`);
+  if(hasMod()){ const st=list.filter(isStale).length; if(st) ex.push(`<b>${fmt(st)}</b> tickets abiertos no tienen movimiento hace ${CFG.staleBusinessDays||5} días hábiles o más.`); }
+  if(hasEv()){ const rs=res.filter(t=>t.ev); if(rs.length){ const ro=rs.filter(t=>t.ev.o>0).length, re=rs.filter(t=>t.ev.r>=1).length, tot=rs.reduce((a,t)=>a+(t.solvedate-t.date)/36e5,0), wt=rs.reduce((a,t)=>a+(t.ev.w||0),0); ex.push(`De los resueltos, ${fmtPct(pct(re,rs.length))} pasó por más de un grupo, ${fmtPct(pct(ro,rs.length))} se reabrió y ${fmtPct(pct(wt,tot))} del tiempo total se pasó en espera.`); } }
   { const d8=list.filter(t=>dueSoon(t,8)).length; if(d8) ex.push(`Al momento de los datos, <b>${fmt(d8)}</b> tickets vencen su SLA en las próximas 8 horas.`); }
   if(P.length) ex.push(`Hay <b>${fmt(popen.length)}</b> problemas abiertos; el más antiguo lleva ${popen.length?fmt(Math.max(...popen.map(o=>Math.floor((r.cut-o.date)/864e5))))+' días':'–'}.`);
   if(satAvg!==null) ex.push(`La satisfacción promedio fue <b>${satAvg.toLocaleString('es-AR',{maximumFractionDigits:2})} / 5</b> sobre ${fmt(sat.length)} encuestas (${fmt(neg)} negativas).`);
@@ -1113,13 +1161,13 @@ function loadFile(file){ const fr=new FileReader(); fr.onload=()=>{ try{ setData
 
 function openCfg(){
   $('#cGlpi').value=CFG.glpiUrl; $('#cApp').value=CFG.appToken; $('#cUser').value=CFG.userToken; $('#cMonths').value=CFG.monthsBack;
-  $('#cP1').value=CFG.slaTargets[1]; $('#cPx').value=CFG.slaTargets[2]; $('#cAge').value=CFG.maxAgeBusinessDays;
+  $('#cP1').value=CFG.slaTargets[1]; $('#cPx').value=CFG.slaTargets[2]; $('#cAge').value=CFG.maxAgeBusinessDays; if($('#cStale')) $('#cStale').value=CFG.staleBusinessDays||5;
   $('#cAreas').value=JSON.stringify(CFG.areas,null,1); $('#cHol').value=(CFG.holidays||[]).join(', ');
   $('#cfgModal').classList.remove('hidden');
 }
 function saveCfgFromForm(){
   CFG.glpiUrl=$('#cGlpi').value.trim(); CFG.appToken=$('#cApp').value.trim(); CFG.userToken=$('#cUser').value.trim(); CFG.monthsBack=+$('#cMonths').value||12;
-  const p1=+$('#cP1').value||97, px=+$('#cPx').value||96; CFG.slaTargets={1:p1,2:px,3:px,4:px,5:px}; CFG.maxAgeBusinessDays=+$('#cAge').value||12;
+  const p1=+$('#cP1').value||97, px=+$('#cPx').value||96; CFG.slaTargets={1:p1,2:px,3:px,4:px,5:px}; CFG.maxAgeBusinessDays=+$('#cAge').value||12; if($('#cStale')) CFG.staleBusinessDays=+$('#cStale').value||5;
   try{ CFG.areas=JSON.parse($('#cAreas').value); }catch(e){ alert('El JSON de áreas no es válido; se mantiene el anterior.'); }
   CFG.holidays=$('#cHol').value.split(/[,\s]+/).map(s=>s.trim()).filter(s=>/^\d{4}-\d{2}-\d{2}$/.test(s));
   saveCfg(CFG); $('#cfgModal').classList.add('hidden');
