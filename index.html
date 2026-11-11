@@ -123,6 +123,25 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn-ghost{color:#E4D6F2;border-color:#5A4876}:root:not([data-theme="light"]) .btn-ghost:hover{background:#33284A}}
 :root[data-theme="dark"] .btn-ghost{color:#E4D6F2;border-color:#5A4876}
 :root[data-theme="dark"] .btn-ghost:hover{background:#33284A}
+.rep-tools{justify-content:flex-end}
+.rep-tools .sub{margin-right:auto}
+.report{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);max-width:960px;margin:0 auto;padding:40px 48px;color:var(--ink);line-height:1.6}
+.report h1{color:var(--oca-purple);font-size:28px;font-weight:600;margin:4px 0 6px;text-wrap:balance}
+.report h2{color:var(--oca-purple);font-size:19px;font-weight:600;margin:28px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--oca-purple-line)}
+.report h3{font-size:15px;margin:16px 0 8px}
+.report p,.report li{max-width:75ch}
+.report ul,.report ol{padding-left:22px;display:grid;gap:6px}
+.report table.data{margin:8px 0 6px}
+.rep-head{border-bottom:3px solid var(--oca-orange);padding-bottom:14px;margin-bottom:8px}
+.rep-kicker{font-size:12px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+.rep-meta{font-size:13px;color:var(--muted)}
+.rep-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.rep-notes{min-height:120px;border:1px dashed var(--oca-purple-line);border-radius:6px;padding:12px;outline:none}
+.rep-notes:focus{border-style:solid;border-color:var(--oca-purple)}
+.rep-notes:empty::before{content:attr(data-placeholder);color:var(--muted)}
+@media (max-width:700px){.report{padding:22px 18px}.rep-cols{grid-template-columns:1fr}}
+@media print{body.print-report .filters,body.print-report .rep-tools,body.print-report .tabpane:not(#tab-informe){display:none!important} body.print-report .report{box-shadow:none;max-width:none;padding:0;color:#333;background:#fff} body.print-report .rep-notes{border:0} body.print-report{background:#fff}}
+.badge{white-space:nowrap}
 .pwform{display:flex;flex-direction:column;gap:10px;max-width:340px;margin:18px auto 0;text-align:left}.pwform label{font-size:13px;color:var(--muted)}.pwform .chk{display:flex;gap:8px;align-items:center}.pwform input[type=password]{font:inherit;padding:10px 12px;border:1px solid var(--oca-purple-line);border-radius:6px;background:var(--card);color:var(--ink)}
 </style>
 </head>
@@ -160,6 +179,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
   <button data-tab="problemas">Problemas</button>
   <button data-tab="cambios">Cambios</button>
   <button data-tab="calidad">Calidad</button>
+  <button data-tab="informe">Informe</button>
   <button data-tab="detalle">Detalle</button>
 </div></nav>
 <main>
@@ -295,6 +315,11 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
       <div class="card"><h3>Distribución de la encuesta de satisfacción</h3><div class="chart-box"><canvas id="chSat"></canvas></div></div>
       <div class="card"><h3>Encuestas negativas (1–2)</h3><div id="calNeg"></div></div>
     </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-informe">
+    <div class="toolbar rep-tools"><span class="sub" style="margin:0">El informe usa el período y los filtros elegidos arriba.</span><span class="status-pill" id="repMsg" aria-live="polite"></span><button class="btn btn-ghost" id="btnRepCopy" type="button">Copiar texto</button><button class="btn btn-ghost" id="btnRepDoc" type="button">Descargar Word</button><button class="btn btn-primary" id="btnRepPrint" type="button">Imprimir o guardar PDF</button></div>
+    <article class="report" id="report"></article>
   </section>
 
   <section class="tabpane hidden" id="tab-detalle">
@@ -608,7 +633,7 @@ function render(){
   $('#periodLabel').textContent = `Período: ${r.from.toLocaleDateString('es-AR')} al ${new Date(r.to-1).toLocaleDateString('es-AR')}`;
   document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('hidden', p.id!=='tab-'+currentTab));
   const list = STATE.tickets.filter(baseFilter);
-  ({resumen:renderResumen, cumplimiento:renderCumplimiento, sla:renderSla, volumen:renderVolumen, backlog:renderBacklog, areas:renderAreas, p1:renderP1, problemas:renderProblemas, cambios:renderCambios, calidad:renderCalidad, detalle:renderDetalle})[currentTab](list, r);
+  ({resumen:renderResumen, cumplimiento:renderCumplimiento, sla:renderSla, volumen:renderVolumen, backlog:renderBacklog, areas:renderAreas, p1:renderP1, problemas:renderProblemas, cambios:renderCambios, calidad:renderCalidad, detalle:renderDetalle, informe:renderInforme})[currentTab](list, r);
 }
 function kpi(label, value, hint, cls='', go=null){ const g=go?` data-goto="${esc(go.scope)}"${go.prio?` data-prio="${go.prio}"`:''}${go.type?` data-type="${go.type}"`:''} role="button" tabindex="0" title="Ver los tickets"`:''; return `<div class="kpi ${cls}"${g}><div class="label">${esc(label)}</div><div class="value">${value}</div>${hint?`<div class="hint">${hint}</div>`:''}${go?'<span class="go">Ver tickets →</span>':''}</div>`; }
 const goLink = (n, scope, extra={}) => n ? `<a href="#" class="go-link" data-goto="${scope}"${extra.prio?` data-prio="${extra.prio}"`:''}${extra.type?` data-type="${extra.type}"`:''}>${fmt(n)}</a>` : fmt(n);
@@ -856,6 +881,87 @@ function renderDetalle(list, r){
   $('#detailTable').innerHTML=ticketTable(arr.slice(0,1000),true);
 }
 
+
+/* ---------- Informe ---------- */
+const NOTES_KEY='oca-tablero-notas';
+function prevRange(r){ const len=Math.max(r.cut-r.from, 864e5); return {from:new Date(r.from-len), to:new Date(r.from), cut:new Date(r.from)}; }
+function delta(a,b){ if(!b) return ''; const d=100*(a-b)/b; return ` (${d>=0?'+':''}${d.toLocaleString('es-AR',{maximumFractionDigits:1})}% vs. el mismo tramo anterior)`; }
+function topN(arr,key,n=5){ const c={}; arr.forEach(t=>{const k=key(t)||'Sin dato'; c[k]=(c[k]||0)+1}); return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,n); }
+function simpleTable(head,rows){ return `<table class="data"><thead><tr>${head.map(h=>`<th${h.n?' class="num"':''}>${esc(h.t||h)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map((c,i)=>`<td${head[i].n?' class="num"':''}>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`; }
+function renderInforme(list, r){
+  const pr=prevRange(r), m=metrics(list,r), mp=metrics(list,pr);
+  const inc=metrics(list.filter(t=>t.type===1),r), req=metrics(list.filter(t=>t.type===2),r);
+  const sla=slaByPriority(list,r), r1=rule01(m), r2=rule02(sla), r3=rule03(m);
+  const blStart=list.filter(t=>openAt(t,r.from)).length;
+  const p1=list.filter(t=>t.p===1&&t.type===1&&inRange(t.date,r)); const p1h=p1.filter(t=>t.solvedate).map(t=>(t.solvedate-t.date)/36e5);
+  const p1avg=p1h.length?p1h.reduce((a,b)=>a+b,0)/p1h.length:null;
+  const P=STATE.problems, popen=P.filter(o=>o.open), C=STATE.changes;
+  const ing=m.ingresados, res=m.resueltos;
+  const per=`${r.from.toLocaleDateString('es-AR')} al ${new Date(r.to-1).toLocaleDateString('es-AR')}`;
+  const badP=[1,2,3,4,5].filter(p=>sla[p].n&&sla[p].pct<sla[p].target);
+  // grupos con más fuera de SLA y backlog vencido
+  const lateRes=res.filter(t=>hasSla(t)&&isLate(t)); const lateG=topN(lateRes,t=>t.group,5);
+  const vencG=topN(m.vencido,t=>t.group,5); const oldG=topN(m.viejos,t=>t.group,5);
+  const cats=topN(ing,t=>t.category.split(' > ').slice(0,2).join(' > '),5), locs=topN(ing,t=>t.location,5), srcs=topN(ing,t=>t.source,4);
+  const sat=res.filter(t=>t.satisfaction>0); const satAvg=sat.length?sat.reduce((a,t)=>a+t.satisfaction,0)/sat.length:null;
+  const neg=sat.filter(t=>t.satisfaction<=2).length;
+  const ok=v=>v?'<span class="badge b-ok">Cumple</span>':'<span class="badge b-ko">No cumple</span>';
+  // Resumen ejecutivo
+  const ex=[];
+  ex.push(`Ingresaron <b>${fmt(ing.length)}</b> tickets${delta(ing.length,mp.ingresados.length)} y se resolvieron <b>${fmt(res.length)}</b>${delta(res.length,mp.resueltos.length)}. El flujo fue <b>${(m.flujo>0?'+':'')+fmt(m.flujo)}</b>: ${m.flujo>=0?'se resolvió más de lo que ingresó y el backlog tiende a bajar':'ingresó más de lo que se resolvió y el backlog tiende a crecer'}.`);
+  ex.push(`El backlog pasó de <b>${fmt(blStart)}</b> tickets al inicio del período a <b>${fmt(m.backlog.length)}</b> al cierre; <b>${fmt(m.vencido.length)}</b> tienen el SLA vencido (${fmtPct(pct(m.vencido.length,m.backlog.length))}) y <b>${fmt(m.viejos.length)}</b> superan los ${CFG.maxAgeBusinessDays} días hábiles sin problema asociado.`);
+  ex.push(`El cumplimiento de SLA de resolución fue <b>${fmtPct(m.slaPct)}</b>${m.slaN?` (${fmt(m.slaOk)} de ${fmt(m.slaN)})`:''}${mp.slaPct!==null?`, contra ${fmtPct(mp.slaPct)} del período anterior`:''}. ${badP.length?`No alcanzan el objetivo: ${badP.map(p=>`P${p} (${fmtPct(sla[p].pct)})`).join(', ')}.`:'Todas las prioridades alcanzan el objetivo.'}`);
+  ex.push(`Hubo <b>${fmt(p1.length)}</b> incidentes P1 con un tiempo medio de resolución de <b>${fmtH(p1avg)}</b> (objetivo 8 h).`);
+  if(P.length) ex.push(`Hay <b>${fmt(popen.length)}</b> problemas abiertos; el más antiguo lleva ${popen.length?fmt(Math.max(...popen.map(o=>Math.floor((r.cut-o.date)/864e5))))+' días':'–'}.`);
+  if(satAvg!==null) ex.push(`La satisfacción promedio fue <b>${satAvg.toLocaleString('es-AR',{maximumFractionDigits:2})} / 5</b> sobre ${fmt(sat.length)} encuestas (${fmt(neg)} negativas).`);
+  // Recomendaciones
+  const rec=[];
+  if(m.flujo<0) rec.push(`Revertir el flujo negativo: el área con más ingresos que resoluciones es ${(()=>{const a=[...new Set(list.map(t=>t.area))].map(a=>({a,f:metrics(list.filter(t=>t.area===a),r).flujo})).sort((x,y)=>x.f-y.f)[0];return a?`<b>${esc(a.a)}</b> (${a.f})`:'–';})()}.`);
+  badP.forEach(p=>{ const g=topN(lateRes.filter(t=>t.p===p),t=>t.group,2); rec.push(`P${p} está en ${fmtPct(sla[p].pct)} contra ${sla[p].target}%: ${sla[p].n-sla[p].ok} tickets fuera de término${g.length?`, principalmente en ${g.map(([k,n])=>`<b>${esc(k)}</b> (${n})`).join(' y ')}`:''}.`); });
+  if(m.vencido.length) rec.push(`Depurar el backlog vencido (${fmt(m.vencido.length)}), empezando por ${vencG.slice(0,3).map(([k,n])=>`<b>${esc(k)}</b> (${n})`).join(', ')}.`);
+  if(m.viejos.length) rec.push(`Revisar los ${fmt(m.viejos.length)} tickets con más de ${CFG.maxAgeBusinessDays} días hábiles: cerrar los que ya no aplican o vincularlos a un problema si son recurrentes.`);
+  const rep=topN(ing,t=>t.category+' | '+t.location,3).filter(([,n])=>n>=5);
+  if(rep.length) rec.push(`Evaluar abrir problemas por recurrencia: ${rep.map(([k,n])=>`<b>${esc(k.replace(' | ',' en '))}</b> (${n} tickets)`).join('; ')}.`);
+  const noCause=popen.filter(o=>!/^identificada/i.test(o.causa||'')).length; if(noCause) rec.push(`Avanzar el análisis de causa raíz en ${fmt(noCause)} problemas abiertos sin causa identificada.`);
+  if(!rec.length) rec.push('Los indicadores están dentro de objetivo; mantener el seguimiento semanal.');
+  let notes=''; try{ notes=localStorage.getItem(NOTES_KEY)||''; }catch(e){}
+  const html=`
+  <header class="rep-head"><div><div class="rep-kicker">OCA · Gerencia de Sistemas</div><h1>Informe de Gestión IT</h1><div class="rep-meta">Período: ${per}${$('#fArea').value?` · Área: ${esc($('#fArea').value)}`:''}${$('#fGroup').value?` · Grupo: ${esc($('#fGroup').value)}`:''}${$('#fType').value?` · ${$('#fType').value==='1'?'Incidentes':'Requerimientos'}`:''} · Datos al ${(STATE.generated||new Date()).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short',hour12:false})}</div></div></header>
+  <h2>1. Resumen ejecutivo</h2><ul>${ex.map(x=>`<li>${x}</li>`).join('')}</ul>
+  <h2>2. Reglas de cumplimiento del Comité</h2>
+  ${simpleTable([{t:'Regla'},{t:'Resultado'},{t:'Detalle'}],[[ 'Regla 01 · Flujo decreciente',badge(r1.ok),esc(r1.txt)],['Regla 02 · SLA (97% P1, 96% resto)',badge(r2.ok),esc(r2.txt)],['Regla 03 · Antigüedad máxima',badge(r3.ok),esc(r3.txt)]])}
+  <h2>3. Volumen y flujo</h2>
+  ${simpleTable([{t:'Tipo'},{t:'Ingresados',n:1},{t:'Resueltos',n:1},{t:'Flujo',n:1},{t:'Backlog',n:1},{t:'Vencido',n:1},{t:'> 12 días',n:1}],[['Incidentes',fmt(inc.ingresados.length),fmt(inc.resueltos.length),(inc.flujo>0?'+':'')+fmt(inc.flujo),fmt(inc.backlog.length),fmt(inc.vencido.length),fmt(inc.viejos.length)],['Requerimientos',fmt(req.ingresados.length),fmt(req.resueltos.length),(req.flujo>0?'+':'')+fmt(req.flujo),fmt(req.backlog.length),fmt(req.vencido.length),fmt(req.viejos.length)],['<b>Total</b>','<b>'+fmt(ing.length)+'</b>','<b>'+fmt(res.length)+'</b>','<b>'+(m.flujo>0?'+':'')+fmt(m.flujo)+'</b>','<b>'+fmt(m.backlog.length)+'</b>','<b>'+fmt(m.vencido.length)+'</b>','<b>'+fmt(m.viejos.length)+'</b>']])}
+  <p>Comparado con el mismo tramo anterior (${pr.from.toLocaleDateString('es-AR')} al ${new Date(pr.to-1).toLocaleDateString('es-AR')}): ingresados ${fmt(mp.ingresados.length)}, resueltos ${fmt(mp.resueltos.length)}, SLA ${fmtPct(mp.slaPct)}, mediana de resolución ${fmtH(mp.mttrMedian)} (hoy ${fmtH(m.mttrMedian)}).</p>
+  <div class="rep-cols"><div><h3>Categorías con más tickets</h3>${simpleTable([{t:'Categoría'},{t:'Tickets',n:1},{t:'%',n:1}],cats.map(([k,n])=>[esc(k),fmt(n),fmtPct(pct(n,ing.length))]))}</div><div><h3>Sucursales con más tickets</h3>${simpleTable([{t:'Sucursal'},{t:'Tickets',n:1},{t:'%',n:1}],locs.map(([k,n])=>[esc(k),fmt(n),fmtPct(pct(n,ing.length))]))}</div></div>
+  <p>Canal de ingreso: ${srcs.map(([k,n])=>`${esc(k)} ${fmtPct(pct(n,ing.length))}`).join(' · ')}.</p>
+  <h2>4. Cumplimiento de SLA</h2>${slaTableHtml(list,r)}
+  ${lateG.length?`<h3>Grupos con más tickets resueltos fuera de término</h3>${simpleTable([{t:'Grupo'},{t:'Fuera de SLA',n:1}],lateG.map(([k,n])=>[esc(k),fmt(n)]))}`:''}
+  <h2>5. Backlog y antigüedad</h2>
+  <p>Backlog al inicio: <b>${fmt(blStart)}</b> · al cierre: <b>${fmt(m.backlog.length)}</b> · vencido: <b>${fmt(m.vencido.length)}</b> · más de ${CFG.maxAgeBusinessDays} días hábiles: <b>${fmt(m.viejos.length)}</b>.</p>
+  <div class="rep-cols"><div><h3>Grupos con más backlog vencido</h3>${simpleTable([{t:'Grupo'},{t:'Vencidos',n:1}],vencG.map(([k,n])=>[esc(k),fmt(n)]))}</div><div><h3>Grupos con más antigüedad</h3>${simpleTable([{t:'Grupo'},{t:'> 12 días',n:1}],oldG.map(([k,n])=>[esc(k),fmt(n)]))}</div></div>
+  <h2>6. Incidentes P1</h2>
+  <p>${fmt(p1.length)} incidentes P1, ${fmt(p1h.length)} resueltos, tiempo medio ${fmtH(p1avg)}, SLA P1 ${fmtPct(sla[1].pct)} (objetivo ${CFG.slaTargets[1]}%).</p>
+  ${p1.length?simpleTable([{t:'Motivo'},{t:'Cantidad',n:1}],topN(p1,t=>t.category.split(' > ').slice(0,3).join(' > '),6).map(([k,n])=>[esc(k),fmt(n)])):''}
+  ${P.length?`<h2>7. Problemas</h2><p>${fmt(popen.length)} abiertos de ${fmt(P.length)} creados; ${fmt(P.filter(o=>inRange(o.date,r)).length)} creados y ${fmt(P.filter(o=>inRange(o.solvedate,r)).length)} resueltos en el período; causa raíz identificada en ${fmtPct(pct(popen.length-noCause,popen.length))} de los abiertos.</p>
+  <h3>Problemas abiertos más antiguos</h3>${simpleTable([{t:'ID',n:1},{t:'Problema'},{t:'Equipo'},{t:'Etapa'},{t:'Días',n:1}],popen.slice().sort((a,b)=>a.date-b.date).slice(0,8).map(o=>[o.id,esc(o.title),esc(o.equipo),esc(o.etapa),fmt(Math.floor((r.cut-o.date)/864e5))]))}`:''}
+  ${C.length?`<h2>8. Cambios</h2><p>${fmt(C.filter(o=>inRange(o.date,r)).length)} cambios solicitados y ${fmt(C.filter(o=>inRange(o.solvedate,r)).length)} aplicados en el período; ${fmt(C.filter(o=>o.open).length)} pendientes a la fecha.</p>`:''}
+  <h2>${C.length?9:P.length?8:7}. Calidad de servicio</h2>
+  <p>Satisfacción promedio ${satAvg===null?'sin datos':satAvg.toLocaleString('es-AR',{maximumFractionDigits:2})+' / 5'} con ${fmt(sat.length)} respuestas (tasa de respuesta ${fmtPct(pct(sat.length,res.length))}); ${fmt(neg)} encuestas negativas.</p>
+  <h2>Recomendaciones</h2><ol>${rec.map(x=>`<li>${x}</li>`).join('')}</ol>
+  <h2>Comentarios del análisis</h2>
+  <div class="rep-notes" id="repNotes" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="Escribí acá tus conclusiones, acciones acordadas y responsables. Se guardan en este navegador y salen en la impresión y en el Word.">${notes}</div>`;
+  $('#report').innerHTML=html;
+  const n=$('#repNotes'); n.addEventListener('input',()=>{ try{ localStorage.setItem(NOTES_KEY,n.innerHTML); }catch(e){} });
+}
+function reportWord(){
+  const body=$('#report').innerHTML.replace(/contenteditable="true"/g,'');
+  const css='body{font-family:Calibri,Arial,sans-serif;font-size:11pt;color:#333}h1{color:#5B2B82;font-size:22pt;margin:0}h2{color:#5B2B82;font-size:14pt;border-bottom:1px solid #DCCFE8;padding-bottom:3pt;margin-top:16pt}h3{color:#5B2B82;font-size:11.5pt}table{border-collapse:collapse;width:100%;margin:6pt 0}th{background:#5B2B82;color:#fff;text-align:left;padding:4pt 6pt;font-size:10pt}td{border-bottom:1px solid #E6E3EC;padding:4pt 6pt;font-size:10pt}.num{text-align:right}.badge{font-weight:bold}.b-ok{color:#1E7A50}.b-ko{color:#B42335}.b-warn{color:#9A6413}.rep-kicker,.rep-meta{color:#7A7A85;font-size:9.5pt}a{color:#333;text-decoration:none}';
+  const doc=`<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>Informe de Gestión IT</title><style>${css}</style></head><body>${body}</body></html>`;
+  const blob=new Blob(['﻿'+doc],{type:'application/msword'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='Informe_Gestion_IT_'+ymd(new Date())+'.doc'; a.click();
+}
+async function reportCopy(){ const t=$('#report').innerText; try{ await navigator.clipboard.writeText(t); $('#repMsg').textContent='Texto copiado'; }catch(e){ const rg=document.createRange(); rg.selectNodeContents($('#report')); const s=getSelection(); s.removeAllRanges(); s.addRange(rg); $('#repMsg').textContent='Texto seleccionado: copialo con Ctrl+C'; } }
+
 /* ---------- Tablas ---------- */
 function glpiLink(type,id){ const base=(CFG.glpiUrl||'').replace(/\/$/,''); return base?`<a href="${esc(base)}/front/${type}.form.php?id=${id}" target="_blank" rel="noopener">${id}</a>`:id; }
 function ticketTable(arr, wrap){
@@ -955,6 +1061,9 @@ function init(){
   document.addEventListener('click',e=>{ const g=e.target.closest('[data-goto]'); if(!g) return; e.preventDefault(); goDetail(g.dataset.goto,g.dataset.prio,g.dataset.type); });
   document.addEventListener('keydown',e=>{ if((e.key==='Enter'||e.key===' ')&&e.target.matches&&e.target.matches('.kpi[data-goto]')){ e.preventDefault(); e.target.click(); } });
   initTheme();
+  $('#btnRepPrint')&&$('#btnRepPrint').addEventListener('click',()=>{ document.body.classList.add('print-report'); window.print(); setTimeout(()=>document.body.classList.remove('print-report'),500); });
+  $('#btnRepDoc')&&$('#btnRepDoc').addEventListener('click',reportWord);
+  $('#btnRepCopy')&&$('#btnRepCopy').addEventListener('click',reportCopy);
   $('#btnCsv').addEventListener('click',exportCsv);
   $('#btnCfg').addEventListener('click',openCfg); $('#btnCfg2').addEventListener('click',openCfg);
   $('#cSave').addEventListener('click',saveCfgFromForm); $('#cCancel').addEventListener('click',()=>$('#cfgModal').classList.add('hidden'));
