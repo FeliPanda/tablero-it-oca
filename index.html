@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Tablero de Gestión IT · OCA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans:wght@300;400;500;600;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>:root{
+  --oca-purple:#5B2B82; --oca-purple-dark:#46206A; --oca-purple-soft:#EFE9F5; --oca-purple-line:#DCCFE8;
+  --oca-orange:#F3912D; --oca-red:#E94B5B; --oca-green:#2E9E6A; --oca-amber:#E9A23B;
+  --ink:#333; --ink-soft:#4D4D4D; --muted:#7A7A85; --bg:#F6F5F9; --card:#FFFFFF; --line:#E6E3EC;
+  --footer:#E9ECEF; --logo-purple:#5B2B82; --zebra:#FBFAFD; --head:#FFFFFF; --radius:8px; --shadow:0 5px 10px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Fira Sans",Fira,system-ui,sans-serif;font-weight:400;color:var(--ink-soft);background:var(--bg);font-size:15px;line-height:1.45}
+a{color:var(--oca-purple)}
+header.top{background:var(--head);box-shadow:0 2px 6px rgba(0,0,0,.12);position:sticky;top:0;z-index:20}
+.top-inner{max-width:1360px;margin:0 auto;display:flex;align-items:center;gap:20px;padding:10px 20px}
+.brand{display:flex;align-items:center;gap:14px;text-decoration:none}
+.brand img{height:34px} .oca-logo{height:30px;width:auto;display:block}
+.brand .fallback-logo{font-weight:800;font-size:28px;color:var(--oca-purple);letter-spacing:.5px}
+.brand .fallback-logo b{color:var(--oca-orange)}
+.brand-title{border-left:1px solid var(--line);padding-left:14px;color:var(--ink);font-weight:500;font-size:15px;line-height:1.2}
+.brand-title small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.btn{font-family:inherit;border:0;border-radius:var(--radius);padding:9px 16px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.btn-primary{background:var(--oca-purple);color:#fff}
+.btn-primary:hover{background:var(--oca-purple-dark)}
+.btn-cta{background:var(--oca-red);color:#fff}
+.btn-ghost{background:transparent;color:var(--oca-purple);border:1px solid var(--oca-purple-line)}
+.btn-ghost:hover{background:var(--oca-purple-soft)}
+.status-pill{font-size:12px;color:var(--muted);background:var(--bg);border-radius:999px;padding:4px 10px;white-space:nowrap}
+nav.tabs{background:var(--oca-purple)}
+.tabs-inner{max-width:1360px;margin:0 auto;display:flex;gap:2px;padding:0 12px;overflow-x:auto}
+.tabs-inner button{background:transparent;border:0;color:#E8DDF2;font-family:inherit;font-size:14px;padding:12px 14px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent}
+.tabs-inner button.active{color:#fff;border-bottom-color:var(--oca-orange);font-weight:500}
+.tabs-inner button:hover{color:#fff}
+main{max-width:1360px;margin:0 auto;padding:18px 20px 40px}
+.filters{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:18px}
+.filters label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:4px}
+.filters select,.filters input{font-family:inherit;font-size:14px;border:1px solid var(--oca-purple-line);border-radius:6px;padding:7px 9px;color:var(--ink);background:var(--card);min-width:150px}
+.filters .period-label{margin-left:auto;font-size:13px;color:var(--ink);background:var(--oca-purple-soft);border-radius:6px;padding:7px 10px}
+h2.section{color:var(--oca-purple);font-weight:600;font-size:20px;margin:22px 0 10px}
+h3{color:var(--oca-purple);font-weight:600;font-size:16px;margin:0 0 10px}
+.sub{color:var(--muted);font-size:13px;margin:-6px 0 12px}
+.grid{display:grid;gap:14px}
+.kpis{grid-template-columns:repeat(auto-fill,minmax(170px,1fr))}
+.kpi{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 16px;border-top:4px solid var(--oca-purple);position:relative}
+.kpi .label{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.kpi .value{font-size:30px;font-weight:600;color:var(--ink);line-height:1.15;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .hint{font-size:12px;color:var(--muted);margin-top:2px}
+.kpi.good{border-top-color:var(--oca-green)} .kpi.bad{border-top-color:var(--oca-red)} .kpi.warn{border-top-color:var(--oca-amber)}
+.kpi.hero{background:var(--oca-purple);color:#fff;border-top-color:var(--oca-orange)}
+.kpi.hero .label,.kpi.hero .hint{color:#E8DDF2} .kpi.hero .value{color:#fff}
+.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cols-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1000px){.cols-2,.cols-3{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+.chart-box{position:relative;height:280px}
+.chart-box.tall{height:360px}
+table.data{width:100%;border-collapse:collapse;font-size:13.5px}
+table.data th{background:var(--oca-purple);color:#fff;font-weight:500;text-align:left;padding:8px 10px;position:sticky;top:0}
+table.data td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+table.data tr:nth-child(even) td{background:var(--zebra)}
+table.data td.num,table.data th.num{text-align:right;font-variant-numeric:tabular-nums}
+table.data tfoot td{font-weight:600;background:var(--oca-purple-soft)}
+.table-wrap{max-height:520px;overflow:auto;border-radius:6px;border:1px solid var(--line)}
+.badge{display:inline-block;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:500}
+.b-ok{background:#E3F4EC;color:#1E7A50} .b-ko{background:#FCE4E7;color:#B42335} .b-warn{background:#FDF1DC;color:#9A6413} .b-na{background:#EEE;color:#666}
+.rules{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+.rule h4{margin:0 0 6px;color:var(--oca-purple);font-size:14px}
+.rule .big{font-size:22px;font-weight:600;color:var(--ink)}
+.heat td{width:32px;height:24px;text-align:center;font-size:11px;padding:0;border:1px solid #fff}
+.heat th{font-size:11px;font-weight:500;color:var(--muted);padding:2px 4px;background:none}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.hidden{display:none!important}
+.modal-bg{position:fixed;inset:0;background:rgba(40,20,60,.45);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{background:var(--card);border-radius:10px;max-width:720px;width:100%;max-height:92vh;overflow:auto;padding:22px 24px;box-shadow:0 20px 40px rgba(0,0,0,.25)}
+.modal h3{font-size:20px}
+.modal .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal label{display:flex;flex-direction:column;font-size:12.5px;color:var(--muted);gap:4px;margin-bottom:10px}
+.modal input,.modal textarea,.modal select{font-family:inherit;font-size:14px;border:1px solid var(--oca-purple-line);border-radius:6px;padding:8px 10px;color:var(--ink)}
+.modal textarea{min-height:90px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:8px}
+.note{font-size:12.5px;color:var(--muted);background:var(--bg);border-radius:6px;padding:8px 10px;margin:6px 0 12px}
+.loader{position:fixed;inset:0;background:rgba(255,255,255,.8);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:60;color:var(--oca-purple);font-weight:500}
+.spinner{width:42px;height:42px;border:4px solid var(--oca-purple-line);border-top-color:var(--oca-purple);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+footer.foot{background:var(--footer);color:var(--ink-soft);font-size:12.5px}
+.foot-inner{max-width:1360px;margin:0 auto;padding:14px 20px;display:flex;gap:16px;flex-wrap:wrap;justify-content:space-between}
+.welcome{max-width:760px;margin:40px auto;text-align:center}
+.welcome .card{padding:30px}
+.welcome h2{color:var(--oca-purple);font-weight:600}
+.welcome .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.legend-inline{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+.legend-inline span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px;background:var(--c)}
+.search{font-family:inherit;font-size:14px;border:1px solid var(--oca-purple-line);border-radius:6px;padding:7px 10px;min-width:260px}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+@media print{header.top,nav.tabs,.filters .btn,.top-actions,footer.foot{display:none} .card,.kpi{box-shadow:none;border:1px solid #ddd}}
+
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17131D; --card:#221C2B; --head:#221C2B; --zebra:#262030; --ink:#ECE7F2; --ink-soft:#D6CFE0; --muted:#A79DB5; --line:#3A3146; --oca-purple-soft:#33284A; --oca-purple-line:#4B3C63; --footer:#1E1926; --logo-purple:#E4D6F2; color-scheme:dark;}}
+:root[data-theme="dark"]{--bg:#17131D; --card:#221C2B; --head:#221C2B; --zebra:#262030; --ink:#ECE7F2; --ink-soft:#D6CFE0; --muted:#A79DB5; --line:#3A3146; --oca-purple-soft:#33284A; --oca-purple-line:#4B3C63; --footer:#1E1926; --logo-purple:#E4D6F2; color-scheme:dark;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) a,:root:not([data-theme="light"]) h2.section,:root:not([data-theme="light"]) h3,:root:not([data-theme="light"]) .rule h4,:root:not([data-theme="light"]) .welcome h2{color:#C9AEE6}}
+:root[data-theme="dark"] a,:root[data-theme="dark"] h2.section,:root[data-theme="dark"] h3,:root[data-theme="dark"] .rule h4,:root[data-theme="dark"] .welcome h2{color:#C9AEE6}
+.snapbar{background:var(--oca-purple-soft);border-bottom:1px solid var(--oca-purple-line)}.snapbar .in{max-width:1360px;margin:0 auto;padding:10px 20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;color:var(--ink)}
+@media (max-width:640px){.top-inner{flex-wrap:wrap}.top-actions{margin-left:0}.filters select,.filters input{min-width:0;width:100%}.filters label{flex:1 1 140px}.filters .period-label{margin-left:0}}
+.pwform{display:flex;flex-direction:column;gap:10px;max-width:340px;margin:18px auto 0;text-align:left}.pwform label{font-size:13px;color:var(--muted)}.pwform .chk{display:flex;gap:8px;align-items:center}.pwform input[type=password]{font:inherit;padding:10px 12px;border:1px solid var(--oca-purple-line);border-radius:6px;background:var(--card);color:var(--ink)}
+</style>
+</head>
+<body>
+
+
+<header class="top"><div class="top-inner">
+  <a class="brand" href="https://www.oca.com.ar/" target="_blank" rel="noopener">
+    <svg class="oca-logo" viewBox="0 0 100 22" height="30" role="img" aria-label="OCA" xmlns="http://www.w3.org/2000/svg"><path fill="var(--logo-purple,#5B2B82)" d="M74.1237 4.05649H65.7959C64.501 4.21278 63.2507 4.97188 62.5809 6.15518C61.7102 7.89664 61.6879 10.0846 61.6209 12.1833C61.8218 14.3043 62.0897 16.47 64.1884 17.3854L65.6396 17.7872H74.213L74.2353 21.3595H65.0591C62.0228 21.3148 59.031 19.4171 57.87 16.7156C56.2402 12.6522 56.3295 6.57938 59.165 3.18576C61.3753 0.77451 64.6796 0.372635 68.0062 0.461941H74.1237V4.05649Z"/><path fill="#F3912D" d="M18.7319 10.9777L9.53338 20.3548H0.245591L9.1315 10.9777L0 1.48895H9.35477L18.7319 10.9777Z"/><path fill="var(--logo-purple,#5B2B82)" d="M30.8998 11.0447L21.8353 20.3994H12.4805L21.4557 11.0447L12.3242 1.55594H21.679L30.8998 11.0447Z"/><path fill="var(--logo-purple,#5B2B82)" d="M53.1815 4.74863C52.6903 3.83324 51.9759 2.80623 51.0828 2.11411C47.7339 -0.31947 42.5318 -0.297143 38.647 0.953136C36.1241 1.89085 34.1371 4.25745 33.6682 6.78033C32.8868 10.4865 33.0431 14.9295 34.9632 18.0552C36.9502 21.3595 41.0806 21.94 44.8314 21.8507C48.292 21.7614 51.9759 20.3771 53.2931 17.0951C54.789 13.5676 54.789 8.32085 53.1815 4.74863ZM49.2297 14.3713C48.7832 15.9118 47.8009 17.43 46.171 17.9435C43.8044 18.591 40.9466 18.5017 39.4061 16.3584C37.8656 13.9918 37.9102 10.3526 38.4907 7.47245C38.9149 5.88727 40.0759 4.36908 41.7727 3.92255C44.2956 3.31974 47.198 3.69928 48.5376 6.04356C49.6986 8.38783 49.8102 11.7145 49.2297 14.3713Z"/><path fill="var(--logo-purple,#5B2B82)" d="M95.5794 12.6521L90.2657 0.484253H85.5995L76.6912 21.3371H81.3351L83.2329 16.403H92.409L94.4854 21.3594H99.3079C98.1023 18.4347 96.7627 15.4653 95.5794 12.6521ZM84.6394 12.6298L87.7205 4.70394L90.9355 12.6298H84.6394Z"/></svg>
+    <span class="brand-title">Tablero de Gestión IT<small>Indicadores de la mesa de ayuda · GLPI</small></span>
+  </a>
+  <div class="top-actions">
+    <span class="status-pill" id="dataStatus">Sin datos</span>
+    <button class="btn btn-ghost" id="btnReload" hidden>⟳ Actualizar</button><button class="btn btn-ghost" id="btnLogout" hidden>Salir</button>
+    
+    
+    
+  </div>
+</div></header>
+
+<section class="welcome" id="welcome"><div class="card"><h2>Tablero de Gestión IT</h2><p>Indicadores del Comité IT calculados con los datos de GLPI: volumen, flujo, backlog, SLA, antigüedad, incidentes P1, problemas, cambios y satisfacción.</p><form id="pwForm" class="pwform" autocomplete="off"><label for="pwIn">Contraseña del tablero</label><input type="password" id="pwIn" required autocomplete="current-password"><label class="chk"><input type="checkbox" id="pwRem"> Recordar en este navegador</label><button class="btn btn-primary" type="submit">Ver tablero</button><p class="note" id="pwMsg">Los datos están cifrados. Pedí la contraseña a Gestión de Procesos IT.</p></form>
+<div hidden><button id="btnApi2"></button><button id="btnJson"></button><input type="file" id="fileIn"><button id="btnCfg2"></button><button id="btnCfg"></button><button id="btnRefresh"></button><button id="btnPrint"></button></div></div></section>
+
+<div class="snapbar" id="snapBar" hidden><div class="in"><span id="snapMsg"></span><button class="btn btn-primary" id="snapSave">Guardar estos datos</button><button class="btn btn-ghost" id="snapCancel">Descartar</button></div></div>
+<div id="app" class="hidden">
+<nav class="tabs"><div class="tabs-inner">
+  <button data-tab="resumen" class="active">Resumen</button>
+  <button data-tab="cumplimiento">Reglas de cumplimiento</button>
+  <button data-tab="sla">SLA</button>
+  <button data-tab="volumen">Volumen y demanda</button>
+  <button data-tab="backlog">Backlog</button>
+  <button data-tab="areas">Áreas y grupos</button>
+  <button data-tab="p1">Incidentes P1</button>
+  <button data-tab="problemas">Problemas</button>
+  <button data-tab="cambios">Cambios</button>
+  <button data-tab="calidad">Calidad</button>
+  <button data-tab="detalle">Detalle</button>
+</div></nav>
+<main>
+  <div class="filters">
+    <label>Período<select id="fPeriod">
+      <option value="week">Semana actual</option><option value="lastweek">Semana anterior</option>
+      <option value="month" selected>Mes actual</option><option value="lastmonth">Mes anterior</option>
+      <option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option>
+      <option value="year">Año actual</option><option value="custom">Personalizado…</option></select></label>
+    <span id="customRange" class="hidden" style="display:flex;gap:12px">
+      <label>Desde<input type="date" id="fFrom"></label><label>Hasta<input type="date" id="fTo"></label></span>
+    <label>Tipo<select id="fType"><option value="">Todos</option><option value="1">Incidentes</option><option value="2">Requerimientos</option></select></label>
+    <label>Área<select id="fArea"></select></label>
+    <label>Grupo<select id="fGroup"></select></label>
+    <label>Prioridad<select id="fPrio"><option value="">Todas</option><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="5">P5</option></select></label>
+    <span class="period-label" id="periodLabel"></span>
+  </div>
+
+  <section class="tabpane" id="tab-resumen">
+    <div class="grid kpis" id="resumenKpis"></div>
+    <h2 class="section">Reglas de cumplimiento del Comité</h2>
+    <div class="grid rules" id="resumenRules"></div>
+    <h2 class="section">Situación del período</h2>
+    <div class="card" id="resumenTable"></div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Ingresados vs. resueltos por mes</h3><div class="chart-box"><canvas id="chMonthly"></canvas></div></div>
+      <div class="card"><h3>Cumplimiento de SLA de resolución por prioridad</h3><div class="chart-box"><canvas id="chSlaP"></canvas></div></div>
+    </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-cumplimiento">
+    <p class="sub">Regla 01: resueltos &gt; ingresados, o ≤ sin backlog vencido. Regla 02: SLA de resolución 97% en P1 y 96% en el resto (se evalúa en incidentes). Regla 03: ningún ticket abierto con más de 12 días hábiles, salvo que esté vinculado a un problema.</p>
+    <div class="card"><h3>Cumplimiento por área y tipo</h3><div class="table-wrap" id="cumplTable"></div></div>
+    <div class="card" style="margin-top:14px"><h3>Evolución semanal del período</h3><div class="table-wrap" id="cumplWeeks"></div></div>
+    <div class="card" style="margin-top:14px"><h3>Tickets vencidos o fuera de antigüedad máxima</h3><div id="cumplDetail"></div></div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-sla">
+    <div class="grid kpis" id="slaKpis"></div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Cumplimiento mensual por prioridad</h3><div class="chart-box"><canvas id="chSlaTrend"></canvas></div></div>
+      <div class="card"><h3>Mediana de horas hasta resolver</h3><div class="chart-box"><canvas id="chMttrP"></canvas></div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Cumplimiento de resolución por área</h3><div class="table-wrap" id="slaArea"></div></div>
+      <div class="card"><h3>SLA de atención por área</h3><div class="chart-box"><canvas id="chTto"></canvas></div></div>
+    </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-volumen">
+    <div class="grid cols-2">
+      <div class="card"><h3>Tickets por mes y tipo</h3><div class="chart-box"><canvas id="chVolType"></canvas></div></div>
+      <div class="card"><h3>Ingresados y resueltos por día</h3><div class="chart-box"><canvas id="chDaily"></canvas></div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Categorías con más tickets</h3><div class="chart-box tall"><canvas id="chCat"></canvas></div></div>
+      <div class="card"><h3>Sucursales con más tickets</h3><div class="chart-box tall"><canvas id="chLoc"></canvas></div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Canal de ingreso</h3><div class="chart-box"><canvas id="chSrc"></canvas></div></div>
+      <div class="card"><h3>Demanda por día y hora</h3><div class="table-wrap" id="heat" style="border:0"></div></div>
+    </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-backlog">
+    <div class="grid cols-2">
+      <div class="card"><h3>Backlog al inicio de cada mes</h3><div class="chart-box"><canvas id="chBacklog"></canvas></div></div>
+      <div class="card"><h3>Antigüedad del backlog</h3><div class="chart-box"><canvas id="chAging"></canvas></div></div>
+    </div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Backlog por grupo</h3><div class="table-wrap" id="blGroups"></div></div>
+      <div class="card"><h3>Backlog por estado</h3><div class="chart-box"><canvas id="chBlStatus"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>Carga por técnico (abiertos)</h3><div class="chart-box tall"><canvas id="chTech"></canvas></div></div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-areas">
+    <div class="grid kpis" id="fcrKpis"></div>
+    <div class="card" style="margin-top:14px"><h3>Actividad por área</h3><div class="chart-box"><canvas id="chAreas"></canvas></div></div>
+    <div class="card" style="margin-top:14px"><h3>Indicadores por grupo</h3><div class="table-wrap" id="groupsTable"></div></div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-p1">
+    <div class="grid kpis" id="p1Kpis"></div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Incidentes P1 por motivo</h3><div class="table-wrap" id="p1ByCat"></div></div>
+      <div class="card"><h3>Incidentes P1 por mes</h3><div class="chart-box"><canvas id="chP1"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><h3>Listado de incidentes P1</h3><div id="p1List"></div></div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-problemas">
+    <div class="empty hidden" id="probEmpty">No hay datos de problemas cargados.</div>
+    <div class="content">
+      <div class="grid cols-2">
+        <div class="card" id="probTable"></div>
+        <div class="card"><h3>Problemas abiertos por año</h3><div id="probAge"></div></div>
+      </div>
+      <div class="grid cols-2" style="margin-top:14px">
+        <div class="card"><h3>Problemas resueltos por mes</h3><div class="chart-box"><canvas id="chProbRes"></canvas></div></div>
+        <div class="card"><h3>Problemas abiertos por etapa</h3><div class="chart-box"><canvas id="chProbStage"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:14px" id="probList"></div>
+    </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-cambios">
+    <div class="empty hidden" id="chgEmpty">No hay datos de cambios cargados.</div>
+    <div class="content">
+      <div class="grid kpis" id="chgKpis"></div>
+      <div class="grid cols-2" style="margin-top:14px">
+        <div class="card"><h3>Cambios por semana</h3><div class="chart-box"><canvas id="chChgWeek"></canvas></div></div>
+        <div class="card"><h3>Cambios abiertos por estado</h3><div class="chart-box"><canvas id="chChgStatus"></canvas></div></div>
+      </div>
+      <div class="card" style="margin-top:14px"><h3>Últimos cambios</h3><div id="chgList"></div></div>
+    </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-calidad">
+    <div class="grid kpis" id="calKpis"></div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Distribución de la encuesta de satisfacción</h3><div class="chart-box"><canvas id="chSat"></canvas></div></div>
+      <div class="card"><h3>Encuestas negativas (1–2)</h3><div id="calNeg"></div></div>
+    </div>
+  </section>
+
+  <section class="tabpane hidden" id="tab-detalle">
+    <div class="toolbar">
+      <select id="dScope" class="search" style="min-width:200px"><option value="ing">Ingresados en el período</option><option value="res">Resueltos en el período</option><option value="bl">Backlog al cierre</option><option value="all">Todos los cargados</option></select>
+      <input class="search" id="dSearch" placeholder="Buscar por ID, título, grupo, categoría…">
+      <span class="status-pill" id="dCount"></span>
+      <button class="btn btn-primary" id="btnCsv" style="margin-left:auto">Exportar CSV</button>
+    </div>
+    <div class="card" id="detailTable"></div>
+  </section>
+</main>
+</div>
+
+<footer class="foot"><div class="foot-inner">
+  <span>OCA · Gerencia de Sistemas · Tablero de Gestión IT</span>
+  <span>Fuente: GLPI · Se actualiza automáticamente desde la red de OCA</span>
+</div></footer>
+
+<div class="modal-bg hidden" id="cfgModal"><div class="modal">
+  <h3>Configuración</h3>
+  <label>URL de GLPI<input id="cGlpi" placeholder="https://glpi.oca.com.ar"></label>
+  <div class="row">
+    <label>App-Token (cliente API)<input id="cApp" type="password" autocomplete="off"></label>
+    <label>Token de API del usuario<input id="cUser" type="password" autocomplete="off"></label>
+  </div>
+  <p class="note">Los tokens se guardan solo en este navegador. Usá un usuario de solo lectura.</p>
+  <div class="row">
+    <label>Meses de historia a descargar<input id="cMonths" type="number" min="1" max="60"></label>
+    <label>Antigüedad máxima (días hábiles)<input id="cAge" type="number" min="1"></label>
+  </div>
+  <div class="row">
+    <label>Objetivo SLA P1 (%)<input id="cP1" type="number" min="0" max="100" step="0.5"></label>
+    <label>Objetivo SLA P2–P5 (%)<input id="cPx" type="number" min="0" max="100" step="0.5"></label>
+  </div>
+  <label>Feriados adicionales (AAAA-MM-DD, separados por coma)<input id="cHol"></label>
+  <label>Áreas por prefijo de grupo (JSON)<textarea id="cAreas"></textarea></label>
+  <div class="actions"><button class="btn btn-ghost" id="cCancel">Cancelar</button><button class="btn btn-ghost" id="btnApi">Guardar y conectar</button><button class="btn btn-primary" id="cSave">Guardar</button></div>
+</div></div>
+
+<div class="loader hidden" id="loader"><div class="spinner"></div><div id="loaderTxt">Cargando…</div></div>
+<script>/* Tablero de Gestión IT – OCA. Lee datos de GLPI (API REST, data.json o archivo) y calcula los KPI del Comité IT. */
+(function(){
+'use strict';
+
+/* ---------- Configuración ---------- */
+const DEFAULT_CFG = {
+  glpiUrl: 'https://glpi.oca.com.ar',
+  appToken: '',
+  userToken: '',
+  monthsBack: 12,
+  slaTargets: {1:97, 2:96, 3:96, 4:96, 5:96},
+  maxAgeBusinessDays: 12,
+  // Áreas (gerencias) por prefijo de grupo. La primera que coincide gana.
+  areas: [
+    {name:'Mesa de Ayuda', match:['MDA','BACKOFFICE']},
+    {name:'Soporte y microinformática', match:['INFRA-MICROINFORMATICA','SOPORTE','CASA CENTRAL','LINEAS SUSPENDIDAS','PENDIENTES DE STOCK']},
+    {name:'Servidores, redes y DBA', match:['INFRA']},
+    {name:'Soporte de aplicaciones', match:['DESA','ARQUITECTURA','EQUIPO DE DISE']},
+    {name:'Seguridad informática', match:['SEGURIDAD']},
+    {name:'Gestión IT', match:['GESTION DE PROCESOS','PMO','GOBIERNO','ENCUESTAS','CX-']}
+  ],
+  holidays: [] // 'YYYY-MM-DD'; se completan desde GLPI si la API lo permite
+};
+const LS_KEY = 'oca-tablero-glpi-cfg';
+function loadCfg(){ try{ const s = JSON.parse(localStorage.getItem(LS_KEY)||'null'); return Object.assign(structuredClone(DEFAULT_CFG), s||{}); }catch(e){ return structuredClone(DEFAULT_CFG); } }
+function saveCfg(c){ try{ localStorage.setItem(LS_KEY, JSON.stringify(c)); }catch(e){} }
+let CFG = loadCfg();
+
+/* ---------- Opciones de búsqueda de GLPI (IDs estándar) ---------- */
+const T_FIELDS = {id:2,title:1,type:14,status:12,priority:3,urgency:10,date:15,solvedate:17,closedate:16,ttr:18,tto:155,lateTTR:82,lateTTO:159,category:7,group:8,tech:5,location:83,source:9,satisfaction:62,problems:200,slaTTR:30,takeDelay:150,solveDelay:154};
+const P_FIELDS = {id:2,title:1,status:12,priority:3,date:15,solvedate:17,closedate:16,category:7,group:8,tech:5,tickets:141,equipo:76685,etapa:76686,causa:76687};
+const C_FIELDS = {id:2,title:1,status:12,priority:3,date:15,solvedate:17,closedate:16,category:7,group:8,tech:5};
+
+/* ---------- Utilidades ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const fmt = n => (n===null||n===undefined||isNaN(n)) ? '–' : Number(n).toLocaleString('es-AR');
+const pct = (a,b) => b ? (100*a/b) : null;
+const fmtPct = v => v===null||v===undefined ? '–' : v.toLocaleString('es-AR',{maximumFractionDigits:1})+'%';
+const fmtH = h => { if(h===null||h===undefined||isNaN(h)) return '–'; if(h<1) return Math.round(h*60)+' min'; if(h<48) return h.toLocaleString('es-AR',{maximumFractionDigits:1})+' h'; return (h/24).toLocaleString('es-AR',{maximumFractionDigits:1})+' d'; };
+const ymd = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const MONTHS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+const monthKey = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+const monthLabel = k => { const [y,m]=k.split('-'); return MONTHS[+m-1]+' '+y.slice(2); };
+const stripHtml = s => String(s ?? '').replace(/<[^>]*>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').trim();
+
+function parseDate(v){
+  if(v===null||v===undefined||v===''||v==='0000-00-00 00:00:00') return null;
+  if(v instanceof Date) return v;
+  const s = stripHtml(v);
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if(m) return new Date(+m[1],+m[2]-1,+m[3],+(m[4]||0),+(m[5]||0),+(m[6]||0));
+  m = s.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})(?:\s+(\d{2}):(\d{2}))?/);
+  if(m) return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0));
+  return null;
+}
+function first(v){ if(Array.isArray(v)) return v.filter(x=>x!==null&&x!=='')[0] ?? null; if(typeof v==='string' && v.includes('$#$')) return v.split('$#$').filter(Boolean)[0]||null; return v; }
+function asList(v){ if(Array.isArray(v)) return v.map(stripHtml).filter(Boolean); if(v===null||v===undefined) return []; return String(v).split(/\$#\$|<br\s*\/?>|\n/).map(stripHtml).filter(Boolean); }
+function yes(v){ const s = stripHtml(first(v)).toLowerCase(); return s==='1'||s==='sí'||s==='si'||s==='yes'||s==='true'; }
+function num(v){ const s = stripHtml(first(v)).replace(/\./g,'').replace(',','.').replace(/\s/g,''); const n = parseFloat(s); return isNaN(n)?null:n; }
+
+const STATUS_TXT = {1:'Nuevo',2:'En curso (asignado)',3:'En curso (planificado)',4:'En espera',5:'Resuelto',6:'Cerrado'};
+function statusCode(v){
+  const x = first(v); if(x===null) return null;
+  const n = parseInt(x,10); if(!isNaN(n) && String(n)===String(x).trim()) return n;
+  const s = stripHtml(x).toLowerCase();
+  if(s.startsWith('nuev')) return 1; if(s.includes('planific')) return 3; if(s.includes('curso')||s.includes('asignad')) return 2;
+  if(s.includes('espera')) return 4; if(s.startsWith('resuel')) return 5; if(s.startsWith('cerrad')) return 6;
+  return null;
+}
+// Cambios/Problemas usan códigos extendidos (evaluación, aprobación, aceptado, aplicado, etc.)
+const ITIL_STATUS_TXT = {1:'Nuevo',2:'En curso (asignado)',3:'En curso (planificado)',4:'En espera',5:'Resuelto / Aplicado',6:'Cerrado',7:'Aceptado',8:'Observado',9:'Evaluación',10:'Aprobación',11:'Prueba',12:'Calificación',13:'Rechazado',14:'Cancelado'};
+function itilStatus(v){
+  const x = first(v); if(x===null) return null;
+  const n = parseInt(x,10); if(!isNaN(n) && String(n)===String(x).trim()) return n;
+  const s = stripHtml(x).toLowerCase();
+  const pairs = [['nuevo',1],['planific',3],['curso',2],['espera',4],['aplicado',5],['resuelto',5],['cerrado',6],['aceptado',7],['observ',8],['evaluaci',9],['aprobaci',10],['prueba',11],['calificaci',12],['rechaz',13],['cancel',14],['revisi',8]];
+  for(const [k,c] of pairs) if(s.includes(k)) return c;
+  return null;
+}
+function typeCode(v){ const x = first(v); const n = parseInt(x,10); if(n===1||n===2) return n; const s = stripHtml(x).toLowerCase(); if(s.startsWith('incid')) return 1; if(s) return 2; return null; }
+// Prioridad OCA (P1..P5). GLPI: 6 Mayor/5 Muy urgente → P1, 4 → P2, 3 → P3, 2 → P4, 1 → P5. Si hay nombre de SLA "Prioridad N" se usa ese.
+function ocaPriority(prioV, slaV){
+  const sla = stripHtml(first(slaV)); const m = sla.match(/Prioridad\s*(\d)/i); if(m) return +m[1];
+  const x = first(prioV); let n = parseInt(x,10);
+  if(isNaN(n) || String(n)!==String(x).trim()){
+    const s = stripHtml(x).toLowerCase();
+    n = s.includes('mayor')?6 : s.startsWith('muy urg')||s.startsWith('muy alta')?5 : s.startsWith('urg')||s.startsWith('alta')?4 : s.startsWith('media')?3 : s.startsWith('muy baja')?1 : s.startsWith('baja')?2 : null;
+  }
+  if(n===null) return null; return n>=5 ? 1 : (6-n);
+}
+function areaOf(group){
+  const g = (group||'').toUpperCase();
+  for(const a of CFG.areas){ if(a.match.some(p => g.startsWith(p.toUpperCase()) || g.includes(p.toUpperCase()))) return a.name; }
+  return g ? 'Otras áreas' : 'Sin grupo';
+}
+
+/* ---------- Normalización de filas ---------- */
+function get(row, id){ return row[id] ?? row[String(id)]; }
+function normTicket(r){
+  const groups = asList(get(r,T_FIELDS.group));
+  const t = {
+    id: parseInt(stripHtml(first(get(r,T_FIELDS.id))).replace(/\D/g,''),10),
+    title: stripHtml(first(get(r,T_FIELDS.title))),
+    type: typeCode(get(r,T_FIELDS.type)),
+    status: statusCode(get(r,T_FIELDS.status)),
+    p: ocaPriority(get(r,T_FIELDS.priority), get(r,T_FIELDS.slaTTR)),
+    date: parseDate(first(get(r,T_FIELDS.date))),
+    solvedate: parseDate(first(get(r,T_FIELDS.solvedate))),
+    closedate: parseDate(first(get(r,T_FIELDS.closedate))),
+    ttr: parseDate(first(get(r,T_FIELDS.ttr))),
+    tto: parseDate(first(get(r,T_FIELDS.tto))),
+    lateTTR: yes(get(r,T_FIELDS.lateTTR)),
+    lateTTO: yes(get(r,T_FIELDS.lateTTO)),
+    category: stripHtml(first(get(r,T_FIELDS.category))) || 'Sin categoría',
+    group: groups[groups.length-1] || '',
+    groups,
+    tech: asList(get(r,T_FIELDS.tech)).join(', '),
+    location: stripHtml(first(get(r,T_FIELDS.location))),
+    source: stripHtml(first(get(r,T_FIELDS.source))) || 'Sin dato',
+    satisfaction: num(get(r,T_FIELDS.satisfaction)),
+    problems: num(get(r,T_FIELDS.problems)) || 0,
+    takeDelay: num(get(r,T_FIELDS.takeDelay)),
+    solveDelay: num(get(r,T_FIELDS.solveDelay))
+  };
+  if(!t.solvedate && (t.status===5||t.status===6)) t.solvedate = t.closedate;
+  t.area = areaOf(t.group);
+  t.open = t.status!==null && t.status<5;
+  return t;
+}
+function normItil(r, F){
+  const groups = asList(get(r,F.group));
+  const o = {
+    id: parseInt(stripHtml(first(get(r,F.id))).replace(/\D/g,''),10),
+    title: stripHtml(first(get(r,F.title))),
+    status: itilStatus(get(r,F.status)),
+    statusTxt: '',
+    p: ocaPriority(get(r,F.priority)),
+    date: parseDate(first(get(r,F.date))),
+    solvedate: parseDate(first(get(r,F.solvedate))),
+    closedate: parseDate(first(get(r,F.closedate))),
+    category: stripHtml(first(get(r,F.category))) || 'Sin categoría',
+    group: groups[groups.length-1] || '', groups,
+    tech: asList(get(r,F.tech)).join(', '),
+    tickets: F.tickets ? (num(get(r,F.tickets))||0) : 0,
+    equipo: F.equipo ? stripHtml(first(get(r,F.equipo))) : '',
+    etapa: F.etapa ? stripHtml(first(get(r,F.etapa))) : '',
+    causa: F.causa ? stripHtml(first(get(r,F.causa))) : ''
+  };
+  o.statusTxt = ITIL_STATUS_TXT[o.status] || stripHtml(first(get(r,F.status)));
+  if(!o.solvedate && (o.status===5||o.status===6)) o.solvedate = o.closedate;
+  o.open = !(o.status===5||o.status===6||o.status===13||o.status===14);
+  o.area = areaOf(o.group);
+  return o;
+}
+
+/* ---------- Estado global ---------- */
+const STATE = { raw:null, tickets:[], problems:[], changes:[], holidays:new Set(), generated:null, source:'', charts:{} };
+
+function setData(data, source){
+  STATE.raw = data; STATE.source = source;
+  STATE.generated = data.generated ? new Date(data.generated) : new Date();
+  STATE.tickets = (data.tickets||[]).map(normTicket).filter(t=>t.id && t.date);
+  STATE.problems = (data.problems||[]).map(r=>normItil(r,P_FIELDS)).filter(t=>t.id && t.date);
+  STATE.changes = (data.changes||[]).map(r=>normItil(r,C_FIELDS)).filter(t=>t.id && t.date);
+  STATE.holidays = new Set([...(CFG.holidays||[]), ...(data.holidays||[])]);
+  $('#welcome').classList.add('hidden'); $('#app').classList.remove('hidden');
+  $('#dataStatus').textContent = `${fmt(STATE.tickets.length)} tickets · ${fmt(STATE.problems.length)} problemas · ${fmt(STATE.changes.length)} cambios · ${source} · ${STATE.generated.toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short',hour12:false})}`;
+  fillFilterOptions(); render();
+}
+window.ocaTableroLoad = setData; // usado por el recolector o pruebas
+
+/* ---------- Días hábiles ---------- */
+function isBusinessDay(d){ const w = d.getDay(); return w!==0 && w!==6 && !STATE.holidays.has(ymd(d)); }
+function businessDaysBetween(a,b){ // días hábiles completos transcurridos entre a y b
+  if(!a||!b||b<=a) return 0; let n=0; const d=new Date(a.getFullYear(),a.getMonth(),a.getDate()+1); const end=new Date(b.getFullYear(),b.getMonth(),b.getDate());
+  let guard=0; while(d<=end && guard<4000){ if(isBusinessDay(d)) n++; d.setDate(d.getDate()+1); guard++; } return n;
+}
+
+/* ---------- Filtros y período ---------- */
+function startOfWeek(d){ const x=new Date(d.getFullYear(),d.getMonth(),d.getDate()); const w=(x.getDay()+6)%7; x.setDate(x.getDate()-w); return x; }
+function periodRange(){
+  const now = STATE.generated || new Date(); const p = $('#fPeriod').value; let from, to;
+  const today = new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  if(p==='week'){ from=startOfWeek(today); to=new Date(from); to.setDate(to.getDate()+7); }
+  else if(p==='lastweek'){ to=startOfWeek(today); from=new Date(to); from.setDate(from.getDate()-7); }
+  else if(p==='month'){ from=new Date(today.getFullYear(),today.getMonth(),1); to=new Date(today.getFullYear(),today.getMonth()+1,1); }
+  else if(p==='lastmonth'){ from=new Date(today.getFullYear(),today.getMonth()-1,1); to=new Date(today.getFullYear(),today.getMonth(),1); }
+  else if(p==='30'){ to=new Date(today); to.setDate(to.getDate()+1); from=new Date(to); from.setDate(from.getDate()-30); }
+  else if(p==='90'){ to=new Date(today); to.setDate(to.getDate()+1); from=new Date(to); from.setDate(from.getDate()-90); }
+  else if(p==='year'){ from=new Date(today.getFullYear(),0,1); to=new Date(today.getFullYear()+1,0,1); }
+  else { from=parseDate($('#fFrom').value)||new Date(today.getFullYear(),today.getMonth(),1); const t2=parseDate($('#fTo').value)||today; to=new Date(t2.getFullYear(),t2.getMonth(),t2.getDate()+1); }
+  const cut = new Date(Math.min(to.getTime(), now.getTime()));
+  return {from, to, cut};
+}
+function fillFilterOptions(){
+  const areas=[...new Set(STATE.tickets.map(t=>t.area))].sort();
+  const groups=[...new Set(STATE.tickets.map(t=>t.group).filter(Boolean))].sort();
+  $('#fArea').innerHTML = '<option value="">Todas</option>'+areas.map(a=>`<option>${esc(a)}</option>`).join('');
+  $('#fGroup').innerHTML = '<option value="">Todos</option>'+groups.map(a=>`<option>${esc(a)}</option>`).join('');
+}
+function baseFilter(t){
+  const ty=$('#fType').value, ar=$('#fArea').value, gr=$('#fGroup').value, pr=$('#fPrio').value;
+  if(ty && String(t.type)!==ty) return false;
+  if(ar && t.area!==ar) return false;
+  if(gr && t.group!==gr) return false;
+  if(pr && String(t.p)!==pr) return false;
+  return true;
+}
+const inRange = (d,r) => d && d>=r.from && d<r.to;
+const hasSla = t => !!(t.ttr || t.lateTTR);
+const isLate = t => t.lateTTR || !!(t.ttr && t.solvedate && t.solvedate>t.ttr);
+function openAt(t, when){ return t.date && t.date<when && !(t.solvedate && t.solvedate<=when) && !(t.status===6 && !t.solvedate && t.closedate && t.closedate<=when); }
+
+/* ---------- Cálculo de indicadores ---------- */
+function metrics(list, r){
+  const cut = r.cut;
+  const ingresados = list.filter(t=>inRange(t.date,r));
+  const resueltos = list.filter(t=>inRange(t.solvedate,r));
+  const backlog = list.filter(t=>openAt(t,cut));
+  const vencido = backlog.filter(t=>t.lateTTR || (t.ttr && t.ttr<cut && t.status!==4));
+  const viejos = backlog.filter(t=>businessDaysBetween(t.date,cut)>CFG.maxAgeBusinessDays && !(t.problems>0));
+  const conSla = resueltos.filter(hasSla);
+  const slaOk = conSla.filter(t=>!isLate(t));
+  const ttoBase = ingresados.filter(t=>t.tto);
+  const ttoOk = ttoBase.filter(t=>!t.lateTTO);
+  const hrs = resueltos.map(t=>(t.solvedate-t.date)/36e5).filter(h=>h>=0).sort((a,b)=>a-b);
+  const median = hrs.length ? hrs[Math.floor(hrs.length/2)] : null;
+  const avg = hrs.length ? hrs.reduce((a,b)=>a+b,0)/hrs.length : null;
+  const sat = resueltos.filter(t=>t.satisfaction!==null && t.satisfaction>0);
+  return {ingresados, resueltos, backlog, vencido, viejos, flujo: resueltos.length-ingresados.length,
+    slaPct: pct(slaOk.length, conSla.length), slaN: conSla.length, slaOk: slaOk.length,
+    ttoPct: pct(ttoOk.length, ttoBase.length), ttoN: ttoBase.length,
+    mttrMedian: median, mttrAvg: avg,
+    satAvg: sat.length ? sat.reduce((a,t)=>a+t.satisfaction,0)/sat.length : null, satN: sat.length};
+}
+function slaByPriority(list, r){
+  const out={}; for(const p of [1,2,3,4,5]){ const res=list.filter(t=>t.p===p && inRange(t.solvedate,r) && hasSla(t)); const ok=res.filter(t=>!isLate(t)); out[p]={n:res.length, ok:ok.length, pct:pct(ok.length,res.length), target:CFG.slaTargets[p]||96}; }
+  return out;
+}
+function rule01(m){ // Flujo decreciente
+  if(m.resueltos.length>m.ingresados.length) return {ok:true, txt:'Resueltos > ingresados'};
+  if(m.vencido.length===0) return {ok:true, txt:'Resueltos ≤ ingresados, sin backlog vencido'};
+  return {ok:false, txt:`Resueltos ≤ ingresados y ${m.vencido.length} vencido(s) en backlog`};
+}
+function rule02(sla){ const bad=Object.entries(sla).filter(([p,v])=>v.n>0 && v.pct<v.target); const has=Object.values(sla).some(v=>v.n>0); if(!has) return {ok:null,txt:'Sin tickets resueltos con SLA'}; return bad.length?{ok:false,txt:'No alcanza: '+bad.map(([p,v])=>`P${p} ${fmtPct(v.pct)}`).join(', ')}:{ok:true,txt:'Todas las prioridades en meta'}; }
+function rule03(m){ return m.viejos.length===0?{ok:true,txt:`Sin tickets > ${CFG.maxAgeBusinessDays} días hábiles`}:{ok:false,txt:`${m.viejos.length} ticket(s) > ${CFG.maxAgeBusinessDays} días hábiles`}; }
+const badge = ok => ok===null?'<span class="badge b-na">Sin datos</span>':ok?'<span class="badge b-ok">Cumple</span>':'<span class="badge b-ko">No cumple</span>';
+
+/* ---------- Gráficos ---------- */
+const PURPLE='#5B2B82', PURPLE2='#9A79BD', ORANGE='#F3912D', RED='#E94B5B', GREEN='#2E9E6A', GREY='#B9B3C4';
+const PALETTE=['#5B2B82','#F3912D','#2E9E6A','#E94B5B','#3A7BD5','#9A79BD','#E9A23B','#1FA3A3','#8C5A3C','#7A7A85'];
+function chart(id, cfg){
+  if(STATE.charts[id]) STATE.charts[id].destroy(); if(window.Chart){ Chart.defaults.font.family='"Fira Sans",system-ui,sans-serif'; Chart.defaults.color=getComputedStyle(document.body).getPropertyValue('--ink-soft').trim()||'#4D4D4D'; Chart.defaults.scale.ticks.precision=0; Chart.defaults.borderColor=getComputedStyle(document.body).getPropertyValue('--line').trim()||'#E6E3EC'; }
+  const el=document.getElementById(id); if(!el || !window.Chart) return;
+  cfg.options = Object.assign({responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{font:{family:'Fira Sans'},boxWidth:12}}, tooltip:{titleFont:{family:'Fira Sans'},bodyFont:{family:'Fira Sans'}}}}, cfg.options||{});
+  STATE.charts[id] = new Chart(el, cfg);
+}
+function lastMonths(n){ const now=STATE.generated||new Date(); let min=Infinity; for(const t of STATE.tickets) if(t.date<min) min=t.date; const first=isFinite(min)?new Date(new Date(min).getFullYear(),new Date(min).getMonth(),1):null; const out=[]; for(let i=n-1;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); if(!first||d>=first) out.push(d);} return out; }
+
+/* ---------- Render ---------- */
+let currentTab='resumen';
+function render(){
+  if(!STATE.tickets.length && !STATE.problems.length){ return; }
+  const r = periodRange();
+  $('#periodLabel').textContent = `Período: ${r.from.toLocaleDateString('es-AR')} al ${new Date(r.to-1).toLocaleDateString('es-AR')}`;
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('hidden', p.id!=='tab-'+currentTab));
+  const list = STATE.tickets.filter(baseFilter);
+  ({resumen:renderResumen, cumplimiento:renderCumplimiento, sla:renderSla, volumen:renderVolumen, backlog:renderBacklog, areas:renderAreas, p1:renderP1, problemas:renderProblemas, cambios:renderCambios, calidad:renderCalidad, detalle:renderDetalle})[currentTab](list, r);
+}
+function kpi(label, value, hint, cls=''){ return `<div class="kpi ${cls}"><div class="label">${esc(label)}</div><div class="value">${value}</div>${hint?`<div class="hint">${hint}</div>`:''}</div>`; }
+
+function renderResumen(list, r){
+  const m = metrics(list, r); const inc = metrics(list.filter(t=>t.type===1), r); const req = metrics(list.filter(t=>t.type===2), r);
+  const sla = slaByPriority(list, r); const r1=rule01(m), r2=rule02(sla), r3=rule03(m);
+  $('#resumenKpis').innerHTML = [
+    kpi('Ingresados', fmt(m.ingresados.length), `${fmt(inc.ingresados.length)} incidentes · ${fmt(req.ingresados.length)} req.`, 'hero'),
+    kpi('Resueltos', fmt(m.resueltos.length), `${fmt(inc.resueltos.length)} incidentes · ${fmt(req.resueltos.length)} req.`),
+    kpi('Flujo', (m.flujo>0?'+':'')+fmt(m.flujo), 'Resueltos − ingresados', m.flujo>=0?'good':'bad'),
+    kpi('Backlog', fmt(m.backlog.length), 'Abiertos al cierre del período'),
+    kpi('Backlog vencido', fmt(m.vencido.length), 'Abiertos con SLA vencido', m.vencido.length?'bad':'good'),
+    kpi(`> ${CFG.maxAgeBusinessDays} días hábiles`, fmt(m.viejos.length), 'Sin problema asociado', m.viejos.length?'warn':'good'),
+    kpi('SLA resolución', fmtPct(m.slaPct), `${fmt(m.slaOk)} de ${fmt(m.slaN)} en término`, m.slaPct===null?'':(m.slaPct>=96?'good':'bad')),
+    kpi('SLA atención', fmtPct(m.ttoPct), `${fmt(m.ttoN)} con tiempo de toma`, m.ttoPct===null?'':(m.ttoPct>=96?'good':'bad')),
+    kpi('Tiempo de resolución', fmtH(m.mttrMedian), `Mediana · promedio ${fmtH(m.mttrAvg)}`),
+    kpi('Satisfacción', m.satAvg===null?'–':m.satAvg.toLocaleString('es-AR',{maximumFractionDigits:2})+' / 5', `${fmt(m.satN)} encuestas respondidas`)
+  ].join('');
+  $('#resumenRules').innerHTML = [
+    ['Regla 01 · Flujo decreciente', r1], ['Regla 02 · SLA compliance', r2], ['Regla 03 · Antigüedad máxima', r3]
+  ].map(([t,x])=>`<div class="card rule"><h4>${t}</h4>${badge(x.ok)}<div style="margin-top:6px;font-size:13px">${esc(x.txt)}</div></div>`).join('');
+  // Tabla tipo comité
+  const row=(name,mm)=>`<tr><td>${name}</td><td class="num">${fmt(mm.ingresados.length)}</td><td class="num">${fmt(mm.resueltos.length)}</td><td class="num">${(mm.flujo>0?'+':'')+fmt(mm.flujo)}</td><td class="num">${fmt(mm.backlog.length)}</td><td class="num">${fmt(mm.viejos.length)}</td><td class="num">${fmt(mm.vencido.length)}</td></tr>`;
+  $('#resumenTable').innerHTML = `<table class="data"><thead><tr><th>Tickets</th><th class="num">Ingresados</th><th class="num">Resueltos</th><th class="num">Flujo</th><th class="num">Backlog</th><th class="num">&gt; ${CFG.maxAgeBusinessDays} días</th><th class="num">Backlog vencido</th></tr></thead><tbody>${row('Incidentes',inc)}${row('Requerimientos',req)}</tbody><tfoot>${row('Total',m).replace(/<tr>|<\/tr>/g,'').replace(/^/,'<tr>')+'</tr>'}</tfoot></table>`;
+  // Mensual
+  const months = lastMonths(12); const keys = months.map(monthKey);
+  const ing = keys.map(k=>list.filter(t=>monthKey(t.date)===k).length);
+  const res = keys.map(k=>list.filter(t=>t.solvedate && monthKey(t.solvedate)===k).length);
+  chart('chMonthly',{type:'bar',data:{labels:keys.map(monthLabel),datasets:[{label:'Ingresados',data:ing,backgroundColor:PURPLE},{label:'Resueltos',data:res,backgroundColor:ORANGE},{type:'line',label:'Flujo',data:res.map((v,i)=>v-ing[i]),borderColor:GREEN,backgroundColor:GREEN,tension:.3,yAxisID:'y1'}]},options:{scales:{y:{beginAtZero:true},y1:{position:'right',grid:{drawOnChartArea:false}}}}});
+  const slaVals=[1,2,3,4,5].map(p=>sla[p].pct===null?null:+sla[p].pct.toFixed(1));
+  chart('chSlaP',{type:'bar',data:{labels:['P1','P2','P3','P4','P5'],datasets:[{label:'Cumplimiento SLA %',data:slaVals,backgroundColor:slaVals.map((v,i)=>v===null?GREY:(v>=CFG.slaTargets[i+1]?GREEN:RED))},{type:'line',label:'Objetivo',data:[1,2,3,4,5].map(p=>CFG.slaTargets[p]),borderColor:PURPLE,borderDash:[6,4],pointRadius:0}]},options:{scales:{y:{min:0,max:100}}}});
+}
+
+function renderCumplimiento(list, r){
+  const areas = [...new Set(list.map(t=>t.area))].sort();
+  let rows='';
+  for(const a of areas){ for(const [ty,lab] of [[1,'Incidentes'],[2,'Requerimientos']]){
+    const sub = list.filter(t=>t.area===a && t.type===ty); if(!sub.length) continue;
+    const m = metrics(sub,r), s = slaByPriority(sub,r), r1=rule01(m), r2=rule02(s), r3=rule03(m);
+    rows += `<tr><td>${esc(a)}</td><td>${lab}</td><td class="num">${fmt(m.ingresados.length)}</td><td class="num">${fmt(m.resueltos.length)}</td><td class="num">${(m.flujo>0?'+':'')+fmt(m.flujo)}</td><td class="num">${fmt(m.backlog.length)}</td><td class="num">${fmt(m.vencido.length)}</td><td class="num">${fmt(m.viejos.length)}</td><td class="num">${fmtPct(m.slaPct)}</td><td>${badge(r1.ok)}</td><td>${ty===1?badge(r2.ok):'<span class="badge b-na">N/A</span>'}</td><td>${badge(r3.ok)}</td></tr>`;
+  }}
+  $('#cumplTable').innerHTML = `<table class="data"><thead><tr><th>Área</th><th>Tipo</th><th class="num">Ingresados</th><th class="num">Resueltos</th><th class="num">Flujo</th><th class="num">Backlog</th><th class="num">Vencido</th><th class="num">&gt; ${CFG.maxAgeBusinessDays} días</th><th class="num">SLA</th><th>RC Flujo</th><th>RC SLA</th><th>RC Antigüedad</th></tr></thead><tbody>${rows||'<tr><td colspan="12" class="empty">Sin datos para el período</td></tr>'}</tbody></table>`;
+  // Semanas del período (comparativo semanal como en el comité)
+  const weeks=[]; let w=startOfWeek(r.from); while(w<r.cut && weeks.length<10){ const e=new Date(w); e.setDate(e.getDate()+7); weeks.push({from:w,to:e,cut:new Date(Math.min(e,(STATE.generated||new Date())))}); w=e; }
+  const wrows = weeks.map(wk=>{ const m=metrics(list,wk); return `<tr><td>${wk.from.toLocaleDateString('es-AR')} – ${new Date(wk.to-1).toLocaleDateString('es-AR')}</td><td class="num">${fmt(m.ingresados.length)}</td><td class="num">${fmt(m.resueltos.length)}</td><td class="num">${(m.flujo>0?'+':'')+fmt(m.flujo)}</td><td class="num">${fmt(m.backlog.length)}</td><td class="num">${fmt(m.vencido.length)}</td><td class="num">${fmt(m.viejos.length)}</td><td class="num">${fmtPct(m.slaPct)}</td></tr>`; }).join('');
+  $('#cumplWeeks').innerHTML = `<table class="data"><thead><tr><th>Semana</th><th class="num">Ingresados</th><th class="num">Resueltos</th><th class="num">Flujo</th><th class="num">Backlog</th><th class="num">Vencido</th><th class="num">&gt; ${CFG.maxAgeBusinessDays} días</th><th class="num">SLA</th></tr></thead><tbody>${wrows}</tbody></table>`;
+  // Vencidos y antiguos (detalle)
+  const m=metrics(list,r);
+  const det=[...new Map([...m.vencido,...m.viejos].map(t=>[t.id,t])).values()].sort((a,b)=>a.date-b.date);
+  $('#cumplDetail').innerHTML = det.length? ticketTable(det.slice(0,400), true) : '<div class="empty">No hay tickets vencidos ni fuera de antigüedad máxima.</div>';
+}
+
+function renderSla(list, r){
+  const sla = slaByPriority(list,r);
+  $('#slaKpis').innerHTML = [1,2,3,4,5].map(p=>kpi(`P${p} · objetivo ${sla[p].target}%`, fmtPct(sla[p].pct), `${fmt(sla[p].ok)} de ${fmt(sla[p].n)} resueltos en término`, sla[p].n?(sla[p].pct>=sla[p].target?'good':'bad'):'')).join('');
+  const months=lastMonths(12), keys=months.map(monthKey);
+  const ds=[1,2,3,4,5].map((p,i)=>({label:'P'+p,data:keys.map(k=>{const res=list.filter(t=>t.p===p&&hasSla(t)&&t.solvedate&&monthKey(t.solvedate)===k);return res.length?+(100*res.filter(t=>!isLate(t)).length/res.length).toFixed(1):null;}),borderColor:PALETTE[i],backgroundColor:PALETTE[i],tension:.25,spanGaps:true}));
+  chart('chSlaTrend',{type:'line',data:{labels:keys.map(monthLabel),datasets:ds},options:{scales:{y:{min:0,max:100}}}});
+  // por área
+  const areas=[...new Set(list.map(t=>t.area))].sort();
+  const rows=areas.map(a=>{const s=slaByPriority(list.filter(t=>t.area===a),r);return `<tr><td>${esc(a)}</td>${[1,2,3,4,5].map(p=>`<td class="num">${s[p].n?`<span class="badge ${s[p].pct>=s[p].target?'b-ok':'b-ko'}">${fmtPct(s[p].pct)}</span><div style="font-size:11px;color:#888">${s[p].ok}/${s[p].n}</div>`:'–'}</td>`).join('')}</tr>`}).join('');
+  $('#slaArea').innerHTML=`<table class="data"><thead><tr><th>Área</th>${[1,2,3,4,5].map(p=>`<th class="num">P${p}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+  // tiempos de resolución por prioridad
+  const hrsP=[1,2,3,4,5].map(p=>{const h=list.filter(t=>t.p===p&&inRange(t.solvedate,r)).map(t=>(t.solvedate-t.date)/36e5).sort((a,b)=>a-b);return h.length?+h[Math.floor(h.length/2)].toFixed(1):null;});
+  chart('chMttrP',{type:'bar',data:{labels:['P1','P2','P3','P4','P5'],datasets:[{label:'Mediana de horas hasta resolver',data:hrsP,backgroundColor:PURPLE2}]},options:{scales:{y:{beginAtZero:true}}}});
+  const ttoA=areas.map(a=>{const x=list.filter(t=>t.area===a&&inRange(t.date,r)&&t.tto);return x.length?+(100*x.filter(t=>!t.lateTTO).length/x.length).toFixed(1):null;});
+  chart('chTto',{type:'bar',data:{labels:areas,datasets:[{label:'SLA de atención (toma de posesión) %',data:ttoA,backgroundColor:ttoA.map(v=>v===null?GREY:v>=96?GREEN:RED)}]},options:{indexAxis:'y',scales:{x:{min:0,max:100}}}});
+}
+
+function renderVolumen(list, r){
+  const months=lastMonths(12), keys=months.map(monthKey);
+  const inc=keys.map(k=>list.filter(t=>t.type===1&&monthKey(t.date)===k).length), req=keys.map(k=>list.filter(t=>t.type===2&&monthKey(t.date)===k).length);
+  chart('chVolType',{type:'bar',data:{labels:keys.map(monthLabel),datasets:[{label:'Incidentes',data:inc,backgroundColor:PURPLE},{label:'Requerimientos',data:req,backgroundColor:PURPLE2}]},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+  const ing=list.filter(t=>inRange(t.date,r));
+  const top=(arr,key,n=10)=>{const c={};arr.forEach(t=>{const k=key(t)||'Sin dato';c[k]=(c[k]||0)+1});return Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,n);};
+  const cats=top(ing,t=>t.category.split(' > ').slice(0,2).join(' > '),12);
+  chart('chCat',{type:'bar',data:{labels:cats.map(x=>x[0]),datasets:[{label:'Tickets ingresados',data:cats.map(x=>x[1]),backgroundColor:PURPLE}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+  const src=top(ing,t=>t.source,8);
+  chart('chSrc',{type:'doughnut',data:{labels:src.map(x=>x[0]),datasets:[{data:src.map(x=>x[1]),backgroundColor:PALETTE}]}});
+  const loc=top(ing,t=>t.location,12);
+  chart('chLoc',{type:'bar',data:{labels:loc.map(x=>x[0]),datasets:[{label:'Tickets por sucursal',data:loc.map(x=>x[1]),backgroundColor:ORANGE}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+  // heatmap día x hora
+  const days=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom']; const H=Array.from({length:7},()=>Array(24).fill(0)); let max=1;
+  ing.forEach(t=>{const d=(t.date.getDay()+6)%7, h=t.date.getHours(); H[d][h]++; max=Math.max(max,H[d][h]);});
+  $('#heat').innerHTML = `<table class="heat"><tr><th></th>${Array.from({length:24},(_,h)=>`<th>${h}</th>`).join('')}</tr>${H.map((row,i)=>`<tr><th>${days[i]}</th>${row.map(v=>`<td title="${v} tickets" style="background:rgba(91,43,130,${v?0.08+0.92*v/max:0.03});color:${v/max>0.55?'#fff':'#555'}">${v||''}</td>`).join('')}</tr>`).join('')}</table>`;
+  // por día del período
+  const dmap={}; ing.forEach(t=>{const k=ymd(t.date);dmap[k]=(dmap[k]||0)+1}); const rs=list.filter(t=>inRange(t.solvedate,r)); const smap={}; rs.forEach(t=>{const k=ymd(t.solvedate);smap[k]=(smap[k]||0)+1});
+  const dk=[]; for(let d=new Date(r.from); d<r.cut && dk.length<120; d.setDate(d.getDate()+1)) dk.push(ymd(d));
+  chart('chDaily',{type:'line',data:{labels:dk.map(k=>k.slice(8)+'/'+k.slice(5,7)),datasets:[{label:'Ingresados',data:dk.map(k=>dmap[k]||0),borderColor:PURPLE,backgroundColor:PURPLE,tension:.2},{label:'Resueltos',data:dk.map(k=>smap[k]||0),borderColor:ORANGE,backgroundColor:ORANGE,tension:.2}]},options:{scales:{y:{beginAtZero:true}}}});
+}
+
+function renderBacklog(list, r){
+  const months=lastMonths(12); const pts=months.map(m=>({k:monthKey(m), open:list.filter(t=>openAt(t,m)), }));
+  chart('chBacklog',{type:'line',data:{labels:pts.map(p=>monthLabel(p.k)),datasets:[{label:'Backlog al día 1 (00:00)',data:pts.map(p=>p.open.length),borderColor:PURPLE,backgroundColor:'rgba(91,43,130,.12)',fill:true,tension:.25},{label:'Vencido al día 1',data:pts.map((p,i)=>p.open.filter(t=>t.ttr&&t.ttr<months[i]&&t.status!==4).length),borderColor:RED,backgroundColor:RED,tension:.25}]},options:{scales:{y:{beginAtZero:true}}}});
+  const bl=list.filter(t=>openAt(t,r.cut));
+  const buckets=[['0–2',0,2],['3–5',3,5],['6–12',6,12],['13–30',13,30],['> 30',31,99999]];
+  const cnt=buckets.map(([l,a,b])=>bl.filter(t=>{const d=businessDaysBetween(t.date,r.cut);return d>=a&&d<=b;}).length);
+  chart('chAging',{type:'bar',data:{labels:buckets.map(b=>b[0]+' días hábiles'),datasets:[{label:'Tickets abiertos',data:cnt,backgroundColor:[GREEN,GREEN,ORANGE,RED,RED]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  const st={};bl.forEach(t=>{const k=STATUS_TXT[t.status]||'Otro';st[k]=(st[k]||0)+1});
+  chart('chBlStatus',{type:'doughnut',data:{labels:Object.keys(st),datasets:[{data:Object.values(st),backgroundColor:PALETTE}]}});
+  const byGroup={};bl.forEach(t=>{const k=t.group||'Sin grupo';byGroup[k]=byGroup[k]||{n:0,v:0,o:0};byGroup[k].n++;if(t.lateTTR||(t.ttr&&t.ttr<r.cut&&t.status!==4))byGroup[k].v++;if(businessDaysBetween(t.date,r.cut)>CFG.maxAgeBusinessDays)byGroup[k].o++;});
+  const rows=Object.entries(byGroup).sort((a,b)=>b[1].n-a[1].n);const tot=bl.length||1;
+  $('#blGroups').innerHTML=`<table class="data"><thead><tr><th>Grupo</th><th class="num">Backlog</th><th class="num">%</th><th class="num">Vencidos</th><th class="num">&gt; ${CFG.maxAgeBusinessDays} días</th></tr></thead><tbody>${rows.map(([g,v])=>`<tr><td>${esc(g)}</td><td class="num">${fmt(v.n)}</td><td class="num">${fmtPct(100*v.n/tot)}</td><td class="num">${fmt(v.v)}</td><td class="num">${fmt(v.o)}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${fmt(bl.length)}</td><td class="num">100%</td><td class="num">${fmt(rows.reduce((a,[,v])=>a+v.v,0))}</td><td class="num">${fmt(rows.reduce((a,[,v])=>a+v.o,0))}</td></tr></tfoot></table>`;
+  const tech={};bl.forEach(t=>{const k=t.tech||'Sin técnico asignado';tech[k]=(tech[k]||0)+1});
+  const tt=Object.entries(tech).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  chart('chTech',{type:'bar',data:{labels:tt.map(x=>x[0]),datasets:[{label:'Tickets abiertos por técnico',data:tt.map(x=>x[1]),backgroundColor:PURPLE2}]},options:{indexAxis:'y',plugins:{legend:{display:false}}}});
+}
+
+function renderAreas(list, r){
+  const areas=[...new Set(list.map(t=>t.area))].sort();
+  const data=areas.map(a=>({a, m:metrics(list.filter(t=>t.area===a),r)}));
+  chart('chAreas',{type:'bar',data:{labels:areas,datasets:[{label:'Ingresados',data:data.map(d=>d.m.ingresados.length),backgroundColor:PURPLE},{label:'Resueltos',data:data.map(d=>d.m.resueltos.length),backgroundColor:ORANGE},{label:'Backlog',data:data.map(d=>d.m.backlog.length),backgroundColor:GREY}]},options:{scales:{y:{beginAtZero:true}}}});
+  const groups=[...new Set(list.map(t=>t.group||'Sin grupo'))];
+  const gd=groups.map(g=>({g,area:areaOf(g),m:metrics(list.filter(t=>(t.group||'Sin grupo')===g),r)})).filter(x=>x.m.ingresados.length||x.m.resueltos.length||x.m.backlog.length).sort((a,b)=>b.m.ingresados.length-a.m.ingresados.length);
+  $('#groupsTable').innerHTML=`<table class="data"><thead><tr><th>Grupo</th><th>Área</th><th class="num">Ingresados</th><th class="num">Resueltos</th><th class="num">Flujo</th><th class="num">Backlog</th><th class="num">Vencido</th><th class="num">SLA</th><th class="num">Mediana resolución</th></tr></thead><tbody>${gd.map(x=>`<tr><td>${esc(x.g)}</td><td>${esc(x.area)}</td><td class="num">${fmt(x.m.ingresados.length)}</td><td class="num">${fmt(x.m.resueltos.length)}</td><td class="num">${(x.m.flujo>0?'+':'')+fmt(x.m.flujo)}</td><td class="num">${fmt(x.m.backlog.length)}</td><td class="num">${fmt(x.m.vencido.length)}</td><td class="num">${fmtPct(x.m.slaPct)}</td><td class="num">${fmtH(x.m.mttrMedian)}</td></tr>`).join('')}</tbody></table>`;
+  // Resolución en primer nivel (MDA-N1)
+  const res=list.filter(t=>inRange(t.solvedate,r)); const n1=res.filter(t=>/^MDA-N1$/i.test(t.group)&&t.groups.length<=1);
+  $('#fcrKpis').innerHTML=[kpi('Resueltos en primer nivel', fmtPct(pct(n1.length,res.length)), `${fmt(n1.length)} de ${fmt(res.length)} resueltos sin derivar fuera de MDA-N1`),kpi('Derivados a otros grupos',fmtPct(pct(res.length-n1.length,res.length)),'Resueltos por un grupo distinto a MDA-N1')].join('');
+}
+
+function renderP1(list, r){
+  const p1=list.filter(t=>t.p===1 && t.type===1 && inRange(t.date,r)).sort((a,b)=>b.date-a.date);
+  const res=p1.filter(t=>t.solvedate); const hrs=res.map(t=>(t.solvedate-t.date)/36e5);
+  const ok=res.filter(t=>hasSla(t)&&!isLate(t));
+  $('#p1Kpis').innerHTML=[kpi('Incidentes P1',fmt(p1.length),'Ingresados en el período','hero'),kpi('Resueltos',fmt(res.length),''),kpi('Tiempo medio de resolución',fmtH(hrs.length?hrs.reduce((a,b)=>a+b,0)/hrs.length:null),'Objetivo 8 h'),kpi('SLA P1',fmtPct(pct(ok.length,res.filter(hasSla).length)),`Objetivo ${CFG.slaTargets[1]}%`,res.length?(pct(ok.length,res.filter(hasSla).length)>=CFG.slaTargets[1]?'good':'bad'):''),kpi('Con problema asociado',fmt(p1.filter(t=>t.problems>0).length),'Vinculados a un Problema')].join('');
+  const byCat={};p1.forEach(t=>{const k=t.category.split(' > ').slice(0,2).join(' > ');byCat[k]=byCat[k]||{n:0,h:[],g:{},prob:0};byCat[k].n++;if(t.solvedate)byCat[k].h.push((t.solvedate-t.date)/36e5);byCat[k].g[t.group||'Sin grupo']=(byCat[k].g[t.group||'Sin grupo']||0)+1;if(t.problems>0)byCat[k].prob++;});
+  const rows=Object.entries(byCat).sort((a,b)=>b[1].n-a[1].n).map(([k,v])=>`<tr><td>${esc(k)}</td><td class="num">${v.n}</td><td class="num">${v.prob}</td><td>${Object.entries(v.g).sort((a,b)=>b[1]-a[1]).map(([g,n])=>`${esc(g)} (${Math.round(100*n/v.n)}% – ${n})`).join('<br>')}</td><td class="num">${fmtH(v.h.length?v.h.reduce((a,b)=>a+b,0)/v.h.length:null)}</td></tr>`).join('');
+  $('#p1ByCat').innerHTML=`<table class="data"><thead><tr><th>Motivo (categoría)</th><th class="num">Cantidad</th><th class="num">Con problema</th><th>Equipos</th><th class="num">Tiempo promedio de resolución</th></tr></thead><tbody>${rows||'<tr><td colspan="5" class="empty">Sin incidentes P1 en el período</td></tr>'}</tbody></table>`;
+  $('#p1List').innerHTML = p1.length? ticketTable(p1,true):'';
+  const months=lastMonths(12),keys=months.map(monthKey);
+  chart('chP1',{type:'bar',data:{labels:keys.map(monthLabel),datasets:[{label:'Incidentes P1',data:keys.map(k=>list.filter(t=>t.p===1&&t.type===1&&monthKey(t.date)===k).length),backgroundColor:RED}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+}
+
+function gerencia(o){ const g=(o.group||'').toUpperCase(); if(g.startsWith('DESA')||g.startsWith('ARQ')) return 'Desarrollo'; if(g.startsWith('INFRA')||g.startsWith('SEGURIDAD')||g.startsWith('SOPORTE')) return 'Infraestructura'; if(o.equipo) return /desa|paquet|correo|sap|integr|plataf|shopping/i.test(o.equipo)?'Desarrollo':'Infraestructura'; return 'Sin asignar'; }
+function renderProblemas(_list, r){
+  const P=STATE.problems; $('#probEmpty').classList.toggle('hidden',!!P.length); $('#tab-problemas .content').classList.toggle('hidden',!P.length); if(!P.length) return;
+  const isMejora=o=>/mejora/i.test(o.title)||/mejora/i.test(o.category);
+  const tbl=(arr)=>{const gs=['Infraestructura','Desarrollo','Sin asignar'];return gs.map(g=>{const x=arr.filter(o=>gerencia(o)===g);if(!x.length)return '';return `<tr><td>${g}</td><td class="num">${fmt(x.length)}</td><td class="num">${fmt(x.filter(o=>o.open).length)}</td><td class="num">${fmt(x.filter(o=>inRange(o.date,r)).length)}</td><td class="num">${fmt(x.filter(o=>inRange(o.solvedate,r)).length)}</td></tr>`}).join('')+`<tr style="font-weight:600"><td>Total</td><td class="num">${fmt(arr.length)}</td><td class="num">${fmt(arr.filter(o=>o.open).length)}</td><td class="num">${fmt(arr.filter(o=>inRange(o.date,r)).length)}</td><td class="num">${fmt(arr.filter(o=>inRange(o.solvedate,r)).length)}</td></tr>`;};
+  const head='<thead><tr><th>Gerencia</th><th class="num">Total creados</th><th class="num">Abiertos</th><th class="num">Creados en el período</th><th class="num">Resueltos en el período</th></tr></thead>';
+  $('#probTable').innerHTML=`<h3>Problemas</h3><table class="data">${head}<tbody>${tbl(P.filter(o=>!isMejora(o)))}</tbody></table><h3 style="margin-top:14px">Mejoras</h3><table class="data">${head}<tbody>${tbl(P.filter(isMejora))}</tbody></table>`;
+  const open=P.filter(o=>o.open); const byY={}; open.forEach(o=>{const y=o.date.getFullYear();byY[y]=(byY[y]||0)+1});
+  $('#probAge').innerHTML=`<table class="data"><thead><tr><th>Año de apertura</th><th class="num">Abiertos</th></tr></thead><tbody>${Object.entries(byY).sort().map(([y,n])=>`<tr><td>${y}</td><td class="num">${n}</td></tr>`).join('')}</tbody><tfoot><tr><td>Total</td><td class="num">${open.length}</td></tr></tfoot></table>`;
+  const months=lastMonths(12),keys=months.map(monthKey);
+  chart('chProbRes',{type:'bar',data:{labels:keys.map(monthLabel),datasets:['Desarrollo','Infraestructura'].map((g,i)=>({label:g,data:keys.map(k=>P.filter(o=>gerencia(o)===g&&o.solvedate&&monthKey(o.solvedate)===k).length),backgroundColor:i?ORANGE:PURPLE}))},options:{scales:{y:{beginAtZero:true}}}});
+  const et={};open.forEach(o=>{const k=o.etapa||o.statusTxt||'Sin etapa';et[k]=(et[k]||0)+1});
+  chart('chProbStage',{type:'doughnut',data:{labels:Object.keys(et),datasets:[{data:Object.values(et),backgroundColor:PALETTE}]}});
+  const noCause=P.filter(o=>(o.status===5||o.status===6)&&!o.causa);
+  $('#probList').innerHTML=`<h3>Problemas abiertos (${open.length})</h3>`+itilTable(open.sort((a,b)=>a.date-b.date),true)+(P.some(o=>o.causa!==undefined)?`<h3 style="margin-top:16px">Resueltos sin causa raíz cargada (${noCause.length})</h3>`+itilTable(noCause,true):'');
+}
+
+function renderCambios(_list, r){
+  const C=STATE.changes; $('#chgEmpty').classList.toggle('hidden',!!C.length); $('#tab-cambios .content').classList.toggle('hidden',!C.length); if(!C.length) return;
+  const inP=C.filter(o=>inRange(o.date,r)), done=C.filter(o=>inRange(o.solvedate,r));
+  const hrs=done.map(o=>(o.solvedate-o.date)/36e5);
+  $('#chgKpis').innerHTML=[kpi('Cambios solicitados',fmt(inP.length),'En el período','hero'),kpi('Aplicados / cerrados',fmt(done.length),'En el período'),kpi('Abiertos',fmt(C.filter(o=>o.open).length),'Pendientes a hoy'),kpi('Esperando aprobación',fmt(C.filter(o=>o.status===10||o.status===9||o.status===1).length),'Nuevos, en evaluación o aprobación'),kpi('Rechazados / cancelados',fmt(inP.filter(o=>o.status===13||o.status===14).length),'Del período'),kpi('Tiempo medio hasta aplicar',fmtH(hrs.length?hrs.reduce((a,b)=>a+b,0)/hrs.length:null),'Desde la solicitud')].join('');
+  const wk={};C.forEach(o=>{const k=ymd(startOfWeek(o.date));wk[k]=(wk[k]||0)+1});const wkeys=Object.keys(wk).sort().slice(-16);
+  chart('chChgWeek',{type:'bar',data:{labels:wkeys.map(k=>k.slice(8)+'/'+k.slice(5,7)),datasets:[{label:'Cambios por semana',data:wkeys.map(k=>wk[k]),backgroundColor:PURPLE}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  const st={};C.filter(o=>o.open).forEach(o=>{st[o.statusTxt]=(st[o.statusTxt]||0)+1});
+  chart('chChgStatus',{type:'doughnut',data:{labels:Object.keys(st),datasets:[{data:Object.values(st),backgroundColor:PALETTE}]}});
+  $('#chgList').innerHTML=itilTable(C.slice().sort((a,b)=>b.date-a.date).slice(0,300),true);
+}
+
+function renderCalidad(list, r){
+  const res=list.filter(t=>inRange(t.solvedate,r)); const sat=res.filter(t=>t.satisfaction>0);
+  const dist=[1,2,3,4,5].map(s=>sat.filter(t=>Math.round(t.satisfaction)===s).length);
+  $('#calKpis').innerHTML=[kpi('Satisfacción promedio',sat.length?(sat.reduce((a,t)=>a+t.satisfaction,0)/sat.length).toLocaleString('es-AR',{maximumFractionDigits:2})+' / 5':'–',`${fmt(sat.length)} respuestas`,'hero'),kpi('Respuestas positivas (4–5)',fmtPct(pct(dist[3]+dist[4],sat.length)),''),kpi('Respuestas negativas (1–2)',fmtPct(pct(dist[0]+dist[1],sat.length)),'Revisar con Gestión de Procesos',dist[0]+dist[1]?'warn':''),kpi('Tasa de respuesta',fmtPct(pct(sat.length,res.length)),`Sobre ${fmt(res.length)} resueltos`),kpi('Sin categoría',fmt(list.filter(t=>inRange(t.date,r)&&t.category==='Sin categoría').length),'Ingresados sin categorizar'),kpi('Sin grupo asignado',fmt(list.filter(t=>t.open&&!t.group).length),'Abiertos a hoy')].join('');
+  chart('chSat',{type:'bar',data:{labels:['1','2','3','4','5'],datasets:[{label:'Respuestas por puntaje',data:dist,backgroundColor:[RED,RED,ORANGE,GREEN,GREEN]}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+  const neg=sat.filter(t=>t.satisfaction<=2).sort((a,b)=>b.solvedate-a.solvedate);
+  $('#calNeg').innerHTML=neg.length?ticketTable(neg,true):'<div class="empty">Sin encuestas negativas en el período.</div>';
+}
+
+let detailQuery='';
+function renderDetalle(list, r){
+  const scope=$('#dScope').value; let arr;
+  if(scope==='ing') arr=list.filter(t=>inRange(t.date,r)); else if(scope==='res') arr=list.filter(t=>inRange(t.solvedate,r)); else if(scope==='bl') arr=list.filter(t=>openAt(t,r.cut)); else arr=list;
+  const q=detailQuery.toLowerCase(); if(q) arr=arr.filter(t=>(t.id+' '+t.title+' '+t.group+' '+t.category+' '+t.tech+' '+t.location).toLowerCase().includes(q));
+  arr=arr.sort((a,b)=>b.date-a.date); STATE.detail=arr;
+  $('#dCount').textContent=fmt(arr.length)+' tickets';
+  $('#detailTable').innerHTML=ticketTable(arr.slice(0,1000),true);
+}
+
+/* ---------- Tablas ---------- */
+function glpiLink(type,id){ const base=(CFG.glpiUrl||'').replace(/\/$/,''); return base?`<a href="${esc(base)}/front/${type}.form.php?id=${id}" target="_blank" rel="noopener">${id}</a>`:id; }
+function ticketTable(arr, wrap){
+  const cut=periodRange().cut;
+  const h=`<table class="data"><thead><tr><th>ID</th><th>Título</th><th>Tipo</th><th>P</th><th>Estado</th><th>Grupo</th><th>Categoría</th><th>Apertura</th><th>Vence</th><th>Resolución</th><th class="num">Días hábiles</th></tr></thead><tbody>${arr.map(t=>`<tr><td>${glpiLink('ticket',t.id)}</td><td>${esc(t.title)}</td><td>${t.type===1?'Incidente':'Requerimiento'}</td><td>${t.p?'P'+t.p:'–'}</td><td>${esc(STATUS_TXT[t.status]||'')}</td><td>${esc(t.group)}</td><td>${esc(t.category)}</td><td>${t.date.toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}</td><td>${t.ttr?`<span style="color:${(!t.solvedate&&t.ttr<cut)||(t.solvedate&&t.solvedate>t.ttr)?'#B42335':'inherit'}">${t.ttr.toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}</span>`:'–'}</td><td>${t.solvedate?t.solvedate.toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):''}</td><td class="num">${businessDaysBetween(t.date,t.solvedate||cut)}</td></tr>`).join('')}</tbody></table>`;
+  return wrap?`<div class="table-wrap">${h}</div>`:h;
+}
+function itilTable(arr, wrap){
+  const type = arr===STATE.changes||arr.some(o=>STATE.changes.includes(o)) ? 'change' : 'problem';
+  const h=`<table class="data"><thead><tr><th>ID</th><th>Título</th><th>Estado</th><th>Grupo</th><th>Etapa</th><th>Apertura</th><th>Resolución</th><th class="num">Tickets</th></tr></thead><tbody>${arr.map(o=>`<tr><td>${glpiLink(type,o.id)}</td><td>${esc(o.title)}</td><td>${esc(o.statusTxt)}</td><td>${esc(o.group)}</td><td>${esc(o.etapa)}</td><td>${o.date.toLocaleDateString('es-AR')}</td><td>${o.solvedate?o.solvedate.toLocaleDateString('es-AR'):''}</td><td class="num">${o.tickets||''}</td></tr>`).join('')}</tbody></table>`;
+  return wrap?`<div class="table-wrap">${h}</div>`:h;
+}
+function exportCsv(){
+  const arr=STATE.detail||[]; const cols=['ID','Título','Tipo','Prioridad','Estado','Área','Grupo','Técnico','Categoría','Sucursal','Origen','Apertura','Vencimiento','Resolución','Vencido SLA','Días hábiles'];
+  const cut=periodRange().cut;
+  const lines=[cols.join(';')].concat(arr.map(t=>[t.id,t.title,t.type===1?'Incidente':'Requerimiento',t.p?'P'+t.p:'',STATUS_TXT[t.status]||'',t.area,t.group,t.tech,t.category,t.location,t.source,t.date?t.date.toLocaleString('es-AR'):'',t.ttr?t.ttr.toLocaleString('es-AR'):'',t.solvedate?t.solvedate.toLocaleString('es-AR'):'',(t.ttr&&((t.solvedate&&t.solvedate>t.ttr)||(!t.solvedate&&t.ttr<cut)))?'Sí':'No',businessDaysBetween(t.date,t.solvedate||cut)].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(';')));
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tickets_tablero_oca.csv'; a.click();
+}
+
+/* ---------- Carga desde la API de GLPI ---------- */
+async function apiLoad(){
+  const base=CFG.glpiUrl.replace(/\/$/,'')+'/apirest.php';
+  if(!CFG.appToken||!CFG.userToken) throw new Error('Faltan el App-Token y el token de usuario (Configuración).');
+  showLoader('Conectando con GLPI…');
+  const h0={'Content-Type':'application/json','App-Token':CFG.appToken};
+  const init=await fetch(base+'/initSession?get_full_session=false',{headers:Object.assign({'Authorization':'user_token '+CFG.userToken},h0)});
+  const ij=await init.json().catch(()=>null);
+  if(!init.ok||!ij||!ij.session_token) throw new Error('No se pudo iniciar sesión en la API: '+JSON.stringify(ij));
+  const H=Object.assign({'Session-Token':ij.session_token},h0);
+  await fetch(base+'/changeActiveEntities',{method:'POST',headers:H,body:JSON.stringify({entities_id:'all',is_recursive:true})}).catch(()=>{});
+  const since=new Date(); since.setMonth(since.getMonth()-(+CFG.monthsBack||12)); since.setDate(1);
+  async function search(itemtype, fields, criteria){
+    const out=[]; let start=0, total=Infinity; const step=500;
+    while(start<total){
+      const q=new URLSearchParams(); criteria.forEach((c,i)=>{Object.entries(c).forEach(([k,v])=>q.append(`criteria[${i}][${k}]`,v));});
+      Object.values(fields).forEach((f,i)=>q.append(`forcedisplay[${i}]`,f));
+      q.append('range',`${start}-${start+step-1}`);
+      showLoader(`Descargando ${itemtype}… ${out.length}${isFinite(total)?' de '+total:''}`);
+      const res=await fetch(`${base}/search/${itemtype}?${q.toString()}`,{headers:H});
+      if(res.status===400||res.status===404){ break; }
+      const j=await res.json(); if(!j||!j.data) break;
+      out.push(...j.data); total=j.totalcount||out.length; start+=step;
+      if(!j.data.length) break;
+    }
+    return out;
+  }
+  const sinceStr=ymd(since)+' 00:00:00';
+  const t1=await search('Ticket',T_FIELDS,[{field:15,searchtype:'morethan',value:sinceStr}]);
+  const t2=await search('Ticket',T_FIELDS,[{field:12,searchtype:'equals',value:'notold'}]);
+  const map=new Map(); [...t1,...t2].forEach(r=>map.set(String(r[2]??r['2']),r));
+  const problems=await search('Problem',P_FIELDS,[{field:12,searchtype:'equals',value:'all'}]);
+  const changes=await search('Change',C_FIELDS,[{field:15,searchtype:'morethan',value:sinceStr}]);
+  let holidays=[];
+  try{ const hr=await fetch(`${base}/Holiday?range=0-500`,{headers:H}); if(hr.ok){ const hj=await hr.json(); hj.forEach(h=>{ const a=parseDate(h.begin_date), b=parseDate(h.end_date); if(a&&b){ for(let d=new Date(a); d<=b; d.setDate(d.getDate()+1)){ if(h.is_perpetual){ for(let y=since.getFullYear(); y<=new Date().getFullYear()+1; y++) holidays.push(y+ymd(d).slice(4)); } else holidays.push(ymd(d)); } } }); } }catch(e){}
+  fetch(`${base}/killSession`,{headers:H}).catch(()=>{});
+  return {generated:new Date().toISOString(), tickets:[...map.values()], problems, changes, holidays};
+}
+
+/* ---------- UI ---------- */
+function showLoader(txt){ $('#loader').classList.remove('hidden'); $('#loaderTxt').textContent=txt; }
+function hideLoader(){ $('#loader').classList.add('hidden'); }
+async function loadFromApi(){ try{ const d=await apiLoad(); hideLoader(); setData(d,'API GLPI en vivo'); }catch(e){ hideLoader(); alert(e.message||e); openCfg(); } }
+async function loadDataJson(silent){ try{ const r=await fetch('data.json',{cache:'no-store'}); if(!r.ok) throw new Error('No se encontró data.json'); const d=await r.json(); setData(d,'data.json'); return true; }catch(e){ if(!silent) alert('No se pudo leer data.json: '+e.message); return false; } }
+function loadFile(file){ const fr=new FileReader(); fr.onload=()=>{ try{ setData(JSON.parse(fr.result),'Archivo '+file.name); }catch(e){ alert('El archivo no es un JSON válido del recolector.'); } }; fr.readAsText(file); }
+
+function openCfg(){
+  $('#cGlpi').value=CFG.glpiUrl; $('#cApp').value=CFG.appToken; $('#cUser').value=CFG.userToken; $('#cMonths').value=CFG.monthsBack;
+  $('#cP1').value=CFG.slaTargets[1]; $('#cPx').value=CFG.slaTargets[2]; $('#cAge').value=CFG.maxAgeBusinessDays;
+  $('#cAreas').value=JSON.stringify(CFG.areas,null,1); $('#cHol').value=(CFG.holidays||[]).join(', ');
+  $('#cfgModal').classList.remove('hidden');
+}
+function saveCfgFromForm(){
+  CFG.glpiUrl=$('#cGlpi').value.trim(); CFG.appToken=$('#cApp').value.trim(); CFG.userToken=$('#cUser').value.trim(); CFG.monthsBack=+$('#cMonths').value||12;
+  const p1=+$('#cP1').value||97, px=+$('#cPx').value||96; CFG.slaTargets={1:p1,2:px,3:px,4:px,5:px}; CFG.maxAgeBusinessDays=+$('#cAge').value||12;
+  try{ CFG.areas=JSON.parse($('#cAreas').value); }catch(e){ alert('El JSON de áreas no es válido; se mantiene el anterior.'); }
+  CFG.holidays=$('#cHol').value.split(/[,\s]+/).map(s=>s.trim()).filter(s=>/^\d{4}-\d{2}-\d{2}$/.test(s));
+  saveCfg(CFG); $('#cfgModal').classList.add('hidden');
+  if(STATE.raw){ setData(STATE.raw, STATE.source); }
+}
+
+function init(){
+  document.querySelectorAll('.tabs-inner button').forEach(b=>b.addEventListener('click',()=>{ document.querySelectorAll('.tabs-inner button').forEach(x=>x.classList.remove('active')); b.classList.add('active'); currentTab=b.dataset.tab; render(); }));
+  ['#fPeriod','#fType','#fArea','#fGroup','#fPrio','#fFrom','#fTo','#dScope'].forEach(s=>$(s)&&$(s).addEventListener('change',()=>{ $('#customRange').classList.toggle('hidden',$('#fPeriod').value!=='custom'); render(); }));
+  $('#dSearch').addEventListener('input',e=>{ detailQuery=e.target.value; render(); });
+  $('#btnCsv').addEventListener('click',exportCsv);
+  $('#btnCfg').addEventListener('click',openCfg); $('#btnCfg2').addEventListener('click',openCfg);
+  $('#cSave').addEventListener('click',saveCfgFromForm); $('#cCancel').addEventListener('click',()=>$('#cfgModal').classList.add('hidden'));
+  $('#btnApi').addEventListener('click',()=>{ saveCfgFromForm(); loadFromApi(); }); $('#btnApi2').addEventListener('click',()=>{ if(CFG.appToken&&CFG.userToken) loadFromApi(); else openCfg(); }); $('#btnRefresh').addEventListener('click',()=>{ if(STATE.source.startsWith('API')) loadFromApi(); else if(STATE.source==='data.json') loadDataJson(); else loadFromApi(); });
+  $('#btnJson').addEventListener('click',()=>loadDataJson(false));
+  $('#fileIn').addEventListener('change',e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); });
+  $('#btnPrint').addEventListener('click',()=>window.print());
+  if(window.OCA_TABLERO_DATA){ setData(window.OCA_TABLERO_DATA,'Datos incluidos'); return; }
+  if(false) loadDataJson(true).then(ok=>{ if(!ok && CFG.appToken && CFG.userToken) loadFromApi(); });
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+})();
+</script>
+<script>/* GitHub Pages: descarga data.enc (cifrado con contraseña) y lo descifra en el navegador. */
+(function(){
+'use strict';
+const $=s=>document.querySelector(s);
+const KEY='oca-tablero-pass';
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+let enc=null;
+async function fetchEnc(){
+  const r=await fetch('data.enc?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok) throw new Error('Todavía no se publicaron datos (data.enc no existe).');
+  return r.json();
+}
+async function decrypt(e,pass){
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pass),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b64(e.salt),iterations:e.iter,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  const plain=await crypto.subtle.decrypt({name:'AES-GCM',iv:b64(e.iv)},key,b64(e.ct));
+  const ds=new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return JSON.parse(await new Response(ds).text());
+}
+async function open(pass,remember){
+  const msg=$('#pwMsg'); msg.textContent='Descifrando…';
+  try{
+    if(!enc) enc=await fetchEnc();
+    const data=await decrypt(enc,pass);
+    try{ if(remember) localStorage.setItem(KEY,pass); else localStorage.removeItem(KEY); }catch(e){}
+    window.__ocaPass=pass;
+    window.ocaTableroLoad(data,'Publicado'); $('#btnReload').hidden=false; $('#btnLogout').hidden=false;
+  }catch(e){
+    enc=null;
+    msg.textContent = (e&&e.name==='OperationError') ? 'Contraseña incorrecta.' : (e.message||String(e));
+    try{ localStorage.removeItem(KEY); }catch(_){}
+  }
+}
+document.addEventListener('submit',e=>{ if(e.target.id!=='pwForm') return; e.preventDefault(); open($('#pwIn').value,$('#pwRem').checked); });
+document.addEventListener('click',e=>{ if(e.target.id==='btnReload'){ enc=null; if(window.__ocaPass) open(window.__ocaPass,false); else location.reload(); } if(e.target.id==='btnLogout'){ try{localStorage.removeItem(KEY);}catch(_){} location.reload(); } });
+let saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
+if(saved){ $('#pwRem').checked=true; open(saved,true); }
+})();
+</script>
+</body>
+</html>
