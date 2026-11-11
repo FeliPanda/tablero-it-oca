@@ -168,8 +168,10 @@ def add_history(s, base, tickets, log=sys.stderr):
         for item in r.json():
             if not isinstance(item, dict) or 'id' not in item: continue
             logs = item.get('_logs')
-            if not isinstance(logs, list):
-                raise RuntimeError('el usuario de la API no tiene permiso para ver el historial')
+            if isinstance(logs, dict):  # GLPI devuelve el historial indexado por id
+                logs = list(logs.values())
+            if not isinstance(logs, list) or any(not isinstance(l, dict) for l in logs):
+                raise RuntimeError(f'respuesta inesperada del historial: {str(logs)[:200]}')
             tid = str(item['id'])
             cache[tid] = {'mod': str(tickets.get(tid, {}).get('19')), 'ev': summarize_logs(logs, now)}
         print(f'  historial {min(i + BATCH, len(pending))}/{len(pending)}', file=log)
