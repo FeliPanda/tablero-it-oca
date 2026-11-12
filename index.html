@@ -174,6 +174,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
   <button data-tab="sla">SLA</button>
   <button data-tab="volumen">Volumen y demanda</button>
   <button data-tab="backlog">Backlog</button>
+  <button data-tab="estados">Tiempos por estado</button>
   <button data-tab="areas">Áreas y grupos</button>
   <button data-tab="p1">Incidentes P1</button>
   <button data-tab="problemas">Problemas</button>
@@ -267,6 +268,17 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
     <div class="card" style="margin-top:14px"><h3>Carga por técnico (abiertos)</h3><div class="chart-box tall"><canvas id="chTech"></canvas></div></div>
   </section>
 
+  <section class="tabpane hidden" id="tab-estados">
+    <p class="sub">Horas corridas que los tickets pasan en cada estado, calculadas con el historial de GLPI. Los indicadores y gráficos usan los tickets resueltos en el período; las tablas incluyen además los abiertos.</p>
+    <div class="grid kpis" id="stKpis"></div>
+    <div class="grid cols-2" style="margin-top:14px">
+      <div class="card"><h3>Tiempo por estado según grupo</h3><div class="chart-box tall"><canvas id="chStGroup"></canvas></div></div>
+      <div class="card"><h3>Tiempo por estado según prioridad</h3><div class="chart-box tall"><canvas id="chStPrio"></canvas></div></div>
+    </div>
+    <div class="card" style="margin-top:14px"><div class="toolbar"><h3>Tickets con más tiempo en espera</h3><button class="btn btn-ghost" data-goto="masespera">Ver todos los de 48 h o más</button></div><p class="sub">Abiertos y resueltos en el período, ordenados por el total de horas en espera.</p><div id="stWaitTop"></div></div>
+    <div class="card" style="margin-top:14px"><h3>Abiertos con más tiempo en su estado actual</h3><p class="sub">Cuánto hace que cada ticket abierto no cambia de estado.</p><div id="stCurTop"></div></div>
+  </section>
+
   <section class="tabpane hidden" id="tab-areas">
     <div class="grid kpis" id="fcrKpis"></div>
     <div class="card" style="margin-top:14px"><h3>Actividad por área</h3><div class="chart-box"><canvas id="chAreas"></canvas></div></div>
@@ -335,7 +347,7 @@ a.go-link{color:var(--oca-purple);font-weight:600;text-decoration:underline;text
 
   <section class="tabpane hidden" id="tab-detalle">
     <div class="toolbar">
-      <select id="dScope" class="search" style="min-width:200px"><option value="ing">Ingresados en el período</option><option value="res">Resueltos en el período</option><option value="bl">Backlog al cierre</option><option value="venc">Backlog vencido (SLA)</option><option value="viejos">Backlog con más de 12 días hábiles</option><option value="slalate">Resueltos fuera de SLA</option><option value="slaok">Resueltos dentro de SLA</option><option value="ttolate">Atención fuera de término</option><option value="porvencer4">Por vencer en 4 h</option><option value="porvencer">Por vencer en 8 h</option><option value="abiertos">Abiertos a la fecha</option><option value="stale">Sin movimiento</option><option value="enespera">En espera</option><option value="pingpong">Con 2 o más reasignaciones</option><option value="reab">Reabiertos</option><option value="resall">Resueltos en el período (todos)</option><option value="all">Todos los cargados</option></select>
+      <select id="dScope" class="search" style="min-width:200px"><option value="ing">Ingresados en el período</option><option value="res">Resueltos en el período</option><option value="bl">Backlog al cierre</option><option value="venc">Backlog vencido (SLA)</option><option value="viejos">Backlog con más de 12 días hábiles</option><option value="slalate">Resueltos fuera de SLA</option><option value="slaok">Resueltos dentro de SLA</option><option value="ttolate">Atención fuera de término</option><option value="porvencer4">Por vencer en 4 h</option><option value="porvencer">Por vencer en 8 h</option><option value="abiertos">Abiertos a la fecha</option><option value="stale">Sin movimiento</option><option value="enespera">En espera</option><option value="masespera">48 h o más en espera</option><option value="pingpong">Con 2 o más reasignaciones</option><option value="reab">Reabiertos</option><option value="resall">Resueltos en el período (todos)</option><option value="all">Todos los cargados</option></select>
       <select id="dType" class="search" style="min-width:150px"><option value="">Todos los tipos</option><option value="1">Incidentes</option><option value="2">Requerimientos</option></select>
       <select id="dPrio" class="search" style="min-width:130px"><option value="">Todas las P</option><option value="1">P1</option><option value="2">P2</option><option value="3">P3</option><option value="4">P4</option><option value="5">P5</option></select>
       <input class="search" id="dSearch" placeholder="Buscar por ID, título, grupo, categoría…">
@@ -601,6 +613,9 @@ const hasMod = () => STATE.tickets.some(t=>t.lastupdate);
 const waitHours = t => !t.ev ? null : (t.ev.w||0) + (t.ev.ws && t.status===4 ? Math.max(0,(NOW()-parseDate(t.ev.ws))/36e5) : 0);
 const staleDays = t => t.lastupdate ? businessDaysBetween(t.lastupdate, NOW()) : null;
 const isStale = t => t.open && t.lastupdate && staleDays(t) >= (CFG.staleBusinessDays||5);
+const ST_LBL={1:'Nuevo (sin tomar)',2:'En curso',3:'En curso (planificado)',4:'En espera',5:'Resuelto (hasta el cierre)'};
+const ST_COL={1:'#3A7BD5',2:'#5B2B82',3:'#9A79BD',4:'#F3912D',5:'#2E9E6A'};
+function stHours(t){ if(!t.ev||!t.ev.st) return null; const o={}; for(const k in t.ev.st) o[k]=t.ev.st[k]; if(t.ev.cs&&t.ev.cst&&t.ev.cs<6&&t.open){ const h=Math.max(0,(NOW()-parseDate(t.ev.cst))/36e5); o[t.ev.cs]=(o[t.ev.cs]||0)+h; } return o; }
 const NO_EV = '<div class="empty">Disponible cuando el publicador descargue el historial de los tickets (versión actualizada de publicar.py).</div>';
 const isOld = (t,cut) => businessDaysBetween(t.date,cut)>CFG.maxAgeBusinessDays && !(t.problems>0);
 function openAt(t, when){ return t.date && t.date<when && !(t.solvedate && t.solvedate<=when) && !(t.status===6 && !t.solvedate && t.closedate && t.closedate<=when); }
@@ -659,7 +674,7 @@ function render(){
   $('#periodLabel').textContent = `Período: ${r.from.toLocaleDateString('es-AR')} al ${new Date(r.to-1).toLocaleDateString('es-AR')}`;
   document.querySelectorAll('.tabpane').forEach(p=>p.classList.toggle('hidden', p.id!=='tab-'+currentTab));
   const list = STATE.tickets.filter(baseFilter);
-  ({resumen:renderResumen, cumplimiento:renderCumplimiento, sla:renderSla, volumen:renderVolumen, backlog:renderBacklog, areas:renderAreas, p1:renderP1, problemas:renderProblemas, cambios:renderCambios, calidad:renderCalidad, detalle:renderDetalle, informe:renderInforme})[currentTab](list, r);
+  ({resumen:renderResumen, cumplimiento:renderCumplimiento, sla:renderSla, volumen:renderVolumen, backlog:renderBacklog, areas:renderAreas, p1:renderP1, problemas:renderProblemas, cambios:renderCambios, calidad:renderCalidad, detalle:renderDetalle, informe:renderInforme, estados:renderEstados})[currentTab](list, r);
 }
 function kpi(label, value, hint, cls='', go=null){ const g=go?` data-goto="${esc(go.scope)}"${go.prio?` data-prio="${go.prio}"`:''}${go.type?` data-type="${go.type}"`:''} role="button" tabindex="0" title="Ver los tickets"`:''; return `<div class="kpi ${cls}"${g}><div class="label">${esc(label)}</div><div class="value">${value}</div>${hint?`<div class="hint">${hint}</div>`:''}${go?'<span class="go">Ver tickets →</span>':''}</div>`; }
 const goLink = (n, scope, extra={}) => n ? `<a href="#" class="go-link" data-goto="${scope}"${extra.prio?` data-prio="${extra.prio}"`:''}${extra.type?` data-type="${extra.type}"`:''}>${fmt(n)}</a>` : fmt(n);
@@ -976,7 +991,7 @@ let detailQuery='';
 function renderDetalle(list, r){
   const scope=$('#dScope').value, cut=r.cut; let arr;
   const F={ing:t=>inRange(t.date,r), res:t=>inRange(t.solvedate,r), bl:t=>openAt(t,cut), venc:t=>openAt(t,cut)&&isOverdue(t,cut), viejos:t=>openAt(t,cut)&&isOld(t,cut),
-    slalate:t=>inRange(t.solvedate,r)&&hasSla(t)&&isLate(t), slaok:t=>inRange(t.solvedate,r)&&hasSla(t)&&!isLate(t), ttolate:t=>inRange(t.date,r)&&t.tto&&t.lateTTO, porvencer:t=>dueSoon(t,8), stale:t=>isStale(t), enespera:t=>t.open&&t.status===4, pingpong:t=>inRange(t.date,r)&&t.ev&&t.ev.r>=2, reab:t=>inRange(t.solvedate,r)&&t.ev&&t.ev.o>0, porvencer4:t=>dueSoon(t,4), abiertos:t=>t.open, resall:t=>inRange(t.solvedate,r)};
+    slalate:t=>inRange(t.solvedate,r)&&hasSla(t)&&isLate(t), slaok:t=>inRange(t.solvedate,r)&&hasSla(t)&&!isLate(t), ttolate:t=>inRange(t.date,r)&&t.tto&&t.lateTTO, porvencer:t=>dueSoon(t,8), masespera:t=>(t.open||inRange(t.solvedate,r))&&waitHours(t)>=48, stale:t=>isStale(t), enespera:t=>t.open&&t.status===4, pingpong:t=>inRange(t.date,r)&&t.ev&&t.ev.r>=2, reab:t=>inRange(t.solvedate,r)&&t.ev&&t.ev.o>0, porvencer4:t=>dueSoon(t,4), abiertos:t=>t.open, resall:t=>inRange(t.solvedate,r)};
   arr = F[scope] ? list.filter(F[scope]) : list.slice();
   const dp=$('#dPrio').value, dt=$('#dType').value; if(dp) arr=arr.filter(t=>String(t.p)===dp); if(dt) arr=arr.filter(t=>String(t.type)===dt);
   if(detailExtra){ if(detailExtra.cat) arr=arr.filter(t=>catKey(t)===detailExtra.cat); if(detailExtra.loc) arr=arr.filter(t=>(t.location||'Sin dato')===detailExtra.loc); if(detailExtra.tech) arr=arr.filter(t=>t.techs.includes(detailExtra.tech)); }
@@ -1010,6 +1025,39 @@ function weekCompareHtml(list){
   return `<table class="data"><thead><tr><th>Indicador</th><th class="num">Semana anterior<br><small>${lbl(wPrev2)}</small></th><th class="num">Última semana<br><small>${lbl(wPrev)}</small></th><th class="num">Variación</th><th class="num">Semana en curso<br><small>${lbl(wCur)} (parcial)</small></th></tr></thead><tbody>${tr}</tbody></table>`;
 }
 
+
+/* ---------- Tiempos por estado ---------- */
+function renderEstados(list, r){
+  const box=['#stKpis','#stWaitTop','#stCurTop']; 
+  if(!list.some(t=>t.ev&&t.ev.st)){ $('#stKpis').innerHTML=''; $('#stWaitTop').innerHTML=NO_EV; $('#stCurTop').innerHTML=''; ['chStGroup','chStPrio'].forEach(id=>{ if(STATE.charts[id]){STATE.charts[id].destroy(); delete STATE.charts[id];} }); return; }
+  const res=list.filter(t=>inRange(t.solvedate,r)&&t.ev&&t.ev.st);
+  const avg=(arr,k)=>{ const v=arr.map(t=>(stHours(t)||{})[k]||0); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+  const med=(arr,k)=>{ const v=arr.map(t=>(stHours(t)||{})[k]||0).sort((a,b)=>a-b); return v.length?v[Math.floor(v.length/2)]:null; };
+  const closed=list.filter(t=>t.status===6&&inRange(t.closedate||t.solvedate,r)&&t.ev&&t.ev.st);
+  const enCurso=arr=>{ const v=arr.map(t=>{const h=stHours(t)||{};return (h[2]||0)+(h[3]||0);}); return v.length?v.reduce((a,b)=>a+b,0)/v.length:null; };
+  $('#stKpis').innerHTML=[
+    kpi('Nuevo, sin tomar',fmtH(avg(res,1)),`Promedio · mediana ${fmtH(med(res,1))}`),
+    kpi('En curso',fmtH(enCurso(res)),'Promedio de trabajo efectivo'),
+    kpi('En espera',fmtH(avg(res,4)),`Promedio · ${fmtPct(pct(res.filter(t=>((stHours(t)||{})[4]||0)>0).length,res.length))} pasó por espera`,'',{scope:'masespera'}),
+    kpi('Resuelto hasta el cierre',fmtH(avg(closed,5)),'Promedio en los cerrados del período'),
+    kpi('Tickets analizados',fmt(res.length),'Resueltos en el período con historial')
+  ].join('');
+  // por grupo
+  const gs=topN(res,t=>t.group||'Sin grupo',12).map(([g])=>g);
+  const keys=[1,2,4,5];
+  const dsG=keys.map(k=>({label:ST_LBL[k],data:gs.map(g=>{const a=res.filter(t=>(t.group||'Sin grupo')===g); const v=k===2?enCurso(a):avg(a,k); return v===null?0:+v.toFixed(1);}),backgroundColor:ST_COL[k]}));
+  chart('chStGroup',{type:'bar',data:{labels:gs,datasets:dsG},options:{indexAxis:'y',scales:{x:{stacked:true,title:{display:true,text:'Horas promedio'}},y:{stacked:true}},plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtH(c.raw)}`}}}}});
+  const ps=[1,2,3,4,5];
+  const dsP=keys.map(k=>({label:ST_LBL[k],data:ps.map(p=>{const a=res.filter(t=>t.p===p); const v=k===2?enCurso(a):avg(a,k); return v===null?0:+v.toFixed(1);}),backgroundColor:ST_COL[k]}));
+  chart('chStPrio',{type:'bar',data:{labels:ps.map(p=>'P'+p),datasets:dsP},options:{scales:{x:{stacked:true},y:{stacked:true,title:{display:true,text:'Horas promedio'}}},plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtH(c.raw)}`}}}}});
+  // mayor espera
+  const pool=list.filter(t=>t.ev&&(t.open||inRange(t.solvedate,r))).map(t=>({t,w:waitHours(t)||0})).filter(x=>x.w>0).sort((a,b)=>b.w-a.w).slice(0,50);
+  $('#stWaitTop').innerHTML=pool.length?`<div class="table-wrap">${simpleTable([{t:'ID'},{t:'Título'},{t:'Grupo'},{t:'Técnico'},{t:'Estado actual'},{t:'Veces en espera',n:1},{t:'Total en espera',n:1},{t:'En espera desde'}],pool.map(({t,w})=>[glpiLink('ticket',t.id),esc(t.title),esc(t.group),esc(t.tech)||'–',esc(STATUS_TXT[t.status]||''),fmt(t.ev.wn||1),`<span class="badge ${w>=120?'b-ko':w>=48?'b-warn':'b-na'}">${fmtH(w)}</span>`,(t.status===4&&t.ev.ws)?parseDate(t.ev.ws).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):'–']))}</div>`:'<div class="empty">Ningún ticket pasó por espera.</div>';
+  // tiempo en el estado actual
+  const cur=list.filter(t=>t.open&&t.ev&&t.ev.cst).map(t=>({t,h:(NOW()-parseDate(t.ev.cst))/36e5})).sort((a,b)=>b.h-a.h).slice(0,40);
+  $('#stCurTop').innerHTML=cur.length?`<div class="table-wrap">${simpleTable([{t:'ID'},{t:'Título'},{t:'Estado'},{t:'Grupo'},{t:'Técnico'},{t:'Desde'},{t:'Tiempo en el estado',n:1}],cur.map(({t,h})=>[glpiLink('ticket',t.id),esc(t.title),esc(STATUS_TXT[t.status]||''),esc(t.group),esc(t.tech)||'<span class="badge b-warn">Sin asignar</span>',parseDate(t.ev.cst).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}),`<span class="badge ${h>=240?'b-ko':h>=72?'b-warn':'b-na'}">${fmtH(h)}</span>`]))}</div>`:'<div class="empty">Sin tickets abiertos.</div>';
+}
+
 /* ---------- Informe ---------- */
 const NOTES_KEY='oca-tablero-notas';
 function prevRange(r){ const len=Math.max(r.cut-r.from, 864e5); return {from:new Date(r.from-len), to:new Date(r.from), cut:new Date(r.from)}; }
@@ -1041,6 +1089,7 @@ function renderInforme(list, r){
   ex.push(`El cumplimiento de SLA de resolución fue <b>${fmtPct(m.slaPct)}</b>${m.slaN?` (${fmt(m.slaOk)} de ${fmt(m.slaN)})`:''}${mp.slaPct!==null?`, contra ${fmtPct(mp.slaPct)} del período anterior`:''}. ${badP.length?`No alcanzan el objetivo: ${badP.map(p=>`P${p} (${fmtPct(sla[p].pct)})`).join(', ')}.`:'Todas las prioridades alcanzan el objetivo.'}`);
   ex.push(`Hubo <b>${fmt(p1.length)}</b> incidentes P1 con un tiempo medio de resolución de <b>${fmtH(p1avg)}</b> (objetivo 8 h).`);
   if(hasMod()){ const st=list.filter(isStale).length; if(st) ex.push(`<b>${fmt(st)}</b> tickets abiertos no tienen movimiento hace ${CFG.staleBusinessDays||5} días hábiles o más.`); }
+  { const rs2=res.filter(t=>t.ev&&t.ev.st); if(rs2.length){ const a=k=>rs2.reduce((x,t)=>x+((stHours(t)||{})[k]||0),0)/rs2.length; ex.push(`En promedio, un ticket resuelto pasó ${fmtH(a(1))} sin tomar, ${fmtH(a(2)+a(3))} en curso y ${fmtH(a(4))} en espera.`); } }
   if(hasEv()){ const rs=res.filter(t=>t.ev); if(rs.length){ const ro=rs.filter(t=>t.ev.o>0).length, re=rs.filter(t=>t.ev.r>=1).length, tot=rs.reduce((a,t)=>a+(t.solvedate-t.date)/36e5,0), wt=rs.reduce((a,t)=>a+(t.ev.w||0),0); ex.push(`De los resueltos, ${fmtPct(pct(re,rs.length))} pasó por más de un grupo, ${fmtPct(pct(ro,rs.length))} se reabrió y ${fmtPct(pct(wt,tot))} del tiempo total se pasó en espera.`); } }
   { const d8=list.filter(t=>dueSoon(t,8)).length; if(d8) ex.push(`Al momento de los datos, <b>${fmt(d8)}</b> tickets vencen su SLA en las próximas 8 horas.`); }
   if(P.length) ex.push(`Hay <b>${fmt(popen.length)}</b> problemas abiertos; el más antiguo lleva ${popen.length?fmt(Math.max(...popen.map(o=>Math.floor((r.cut-o.date)/864e5))))+' días':'–'}.`);

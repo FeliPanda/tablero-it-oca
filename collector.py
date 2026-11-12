@@ -35,13 +35,21 @@ def _num(v):
     try: return int(str(v).strip())
     except Exception: return None
 
-def summarize_logs(logs, now):
-    """Resume el historial de un ticket: reasignaciones de grupo, tiempo en espera y reaperturas."""
+HIST_VERSION = 2
+
+def summarize_logs(logs, now, opened=None):
+    """Resume el historial de un ticket: reasignaciones de grupo, tiempo en espera,
+    reaperturas y horas acumuladas en cada estado."""
     ev = sorted(logs, key=lambda l: (str(l.get('date_mod') or ''), int(l.get('id') or 0)))
-    groups, wait_h, wait_start, reopen = [], 0.0, None, 0
+    groups, wait_h, wait_start, reopen, wait_n = [], 0.0, None, 0, 0
     def ts(v):
         try: return dt.datetime.strptime(str(v)[:19], '%Y-%m-%d %H:%M:%S')
         except Exception: return None
+    # horas por estado: se arranca en la apertura con el estado previo al primer cambio
+    st_h = {}
+    first = next((l for l in ev if _num(l.get('id_search_option')) == 12 and (_num(l.get('linked_action')) or 0) == 0), None)
+    cur = _num(first.get('old_value')) if first else None
+    since = ts(opened) if opened else (ts(ev[0].get('date_mod')) if ev else None)
     for l in ev:
         opt, act = _num(l.get('id_search_option')), _num(l.get('linked_action')) or 0
         when = ts(l.get('date_mod'))
@@ -51,11 +59,18 @@ def summarize_logs(logs, now):
                 groups.append(name)
         elif opt == 12 and act == 0:  # cambio de estado
             old, new = _num(l.get('old_value')), _num(l.get('new_value'))
+            if cur is not None and since and when and when >= since:
+                st_h[cur] = st_h.get(cur, 0.0) + (when - since).total_seconds() / 3600
+            cur, since = new, when or since
+            if new == 4: wait_n += 1
             if new == 4 and when: wait_start = when
             if old == 4 and wait_start and when:
                 wait_h += max(0, (when - wait_start).total_seconds() / 3600); wait_start = None
             if old in (5, 6) and new is not None and new < 5: reopen += 1
-    out = {'r': max(0, len(groups) - 1), 'g': groups[:8], 'w': round(wait_h, 2), 'o': reopen}
+    out = {'r': max(0, len(groups) - 1), 'g': groups[:8], 'w': round(wait_h, 2), 'o': reopen, 'wn': wait_n,
+           'st': {str(k): round(v, 2) for k, v in st_h.items() if k}}
+    if cur is not None and since:
+        out['cs'] = cur; out['cst'] = since.strftime('%Y-%m-%d %H:%M:%S')  # estado actual y desde cuándo
     if wait_start: out['ws'] = wait_start.strftime('%Y-%m-%d %H:%M:%S')
     return out
 
@@ -156,7 +171,7 @@ def add_history(s, base, tickets, log=sys.stderr):
     except Exception:
         cache = {}
     now = dt.datetime.now()
-    pending = [tid for tid, t in tickets.items() if cache.get(tid, {}).get('mod') != str(t.get('19'))]
+    pending = [tid for tid, t in tickets.items() if cache.get(tid, {}).get('mod') != str(t.get('19')) or cache.get(tid, {}).get('v') != HIST_VERSION]
     print(f'Historial: {len(pending)} tickets para actualizar ({len(tickets) - len(pending)} en caché)', file=log)
     for i in range(0, len(pending), BATCH):
         chunk = pending[i:i + BATCH]
@@ -173,7 +188,7 @@ def add_history(s, base, tickets, log=sys.stderr):
             if not isinstance(logs, list) or any(not isinstance(l, dict) for l in logs):
                 raise RuntimeError(f'respuesta inesperada del historial: {str(logs)[:200]}')
             tid = str(item['id'])
-            cache[tid] = {'mod': str(tickets.get(tid, {}).get('19')), 'ev': summarize_logs(logs, now)}
+            cache[tid] = {'mod': str(tickets.get(tid, {}).get('19')), 'v': HIST_VERSION, 'ev': summarize_logs(logs, now, tickets.get(tid, {}).get('15'))}
         print(f'  historial {min(i + BATCH, len(pending))}/{len(pending)}', file=log)
     for tid, t in tickets.items():
         if tid in cache: t['ev'] = cache[tid]['ev']
