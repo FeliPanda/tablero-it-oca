@@ -661,7 +661,9 @@ const PALETTE=['#5B2B82','#F3912D','#2E9E6A','#E94B5B','#3A7BD5','#9A79BD','#E9A
 function chart(id, cfg){
   if(STATE.charts[id]) STATE.charts[id].destroy(); if(window.Chart){ Chart.defaults.font.family='"Fira Sans",system-ui,sans-serif'; Chart.defaults.scale.ticks.precision=0; Chart.defaults.color=getComputedStyle(document.body).getPropertyValue('--ink-soft').trim()||'#4D4D4D'; Chart.defaults.borderColor=getComputedStyle(document.body).getPropertyValue('--line').trim()||'#E6E3EC'; }
   const el=document.getElementById(id); if(!el || !window.Chart) return;
-  cfg.options = Object.assign({responsive:true, maintainAspectRatio:false, plugins:{legend:{labels:{font:{family:'Fira Sans'},boxWidth:12}}, tooltip:{titleFont:{family:'Fira Sans'},bodyFont:{family:'Fira Sans'}}}}, cfg.options||{});
+  const FF='"Fira Sans",system-ui,sans-serif';
+  // Resolución mínima 2x: con zoom del navegador < 100% o pantallas comunes el canvas se veía borroso
+  cfg.options = Object.assign({responsive:true, maintainAspectRatio:false, devicePixelRatio:Math.max(2, Math.ceil(window.devicePixelRatio||1)), plugins:{legend:{labels:{font:{family:FF},boxWidth:12}}, tooltip:{titleFont:{family:FF},bodyFont:{family:FF}}}}, cfg.options||{});
   STATE.charts[id] = new Chart(el, cfg);
 }
 function lastMonths(n){ const now=STATE.generated||new Date(); let min=Infinity; for(const t of STATE.tickets) if(t.date<min) min=t.date; const first=isFinite(min)?new Date(new Date(min).getFullYear(),new Date(min).getMonth(),1):null; const out=[]; for(let i=n-1;i>=0;i--){ const d=new Date(now.getFullYear(), now.getMonth()-i, 1); if(!first||d>=first) out.push(d);} return out; }
